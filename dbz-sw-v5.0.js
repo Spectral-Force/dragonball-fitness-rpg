@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dbz-fitness-rpg-v5.0.26';
+const CACHE_NAME = 'dbz-fitness-rpg-v5.0.27';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,7 +6,28 @@ const APP_SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
-  './icons/top_banner.png'
+  './icons/top_banner.png',
+  './images/dragon_balls/earth_dragon_ball_1.svg',
+  './images/dragon_balls/earth_dragon_ball_2.svg',
+  './images/dragon_balls/earth_dragon_ball_3.svg',
+  './images/dragon_balls/earth_dragon_ball_4.svg',
+  './images/dragon_balls/earth_dragon_ball_5.svg',
+  './images/dragon_balls/earth_dragon_ball_6.svg',
+  './images/dragon_balls/earth_dragon_ball_7.svg',
+  './images/dragon_balls/namek_dragon_ball_1.svg',
+  './images/dragon_balls/namek_dragon_ball_2.svg',
+  './images/dragon_balls/namek_dragon_ball_3.svg',
+  './images/dragon_balls/namek_dragon_ball_4.svg',
+  './images/dragon_balls/namek_dragon_ball_5.svg',
+  './images/dragon_balls/namek_dragon_ball_6.svg',
+  './images/dragon_balls/namek_dragon_ball_7.svg',
+  './images/dragon_balls/super_dragon_ball_1.svg',
+  './images/dragon_balls/super_dragon_ball_2.svg',
+  './images/dragon_balls/super_dragon_ball_3.svg',
+  './images/dragon_balls/super_dragon_ball_4.svg',
+  './images/dragon_balls/super_dragon_ball_5.svg',
+  './images/dragon_balls/super_dragon_ball_6.svg',
+  './images/dragon_balls/super_dragon_ball_7.svg'
 ];
 
 self.addEventListener('install', event => {

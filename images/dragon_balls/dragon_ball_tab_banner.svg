@@ -1,0 +1,19 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#05070d"/>
+      <stop offset="0.52" stop-color="#221103"/>
+      <stop offset="1" stop-color="#05070d"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#ff9f1c" stop-opacity="0.80"/>
+      <stop offset="1" stop-color="#ff9f1c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="520" rx="48" fill="url(#bg)"/>
+  <circle cx="600" cy="250" r="210" fill="url(#glow)"/>
+  <circle cx="600" cy="250" r="108" fill="none" stroke="#ff9f1c" stroke-width="12" opacity="0.7"/>
+  <path d="M350 325 C455 185 505 370 600 235 C695 100 755 300 850 190" fill="none" stroke="#ff9f1c" stroke-width="22" stroke-linecap="round" opacity="0.75"/>
+  <text x="600" y="438" text-anchor="middle" fill="#ffc400" font-family="Arial, sans-serif" font-weight="900" font-size="62">Dragon Ball Banner</text>
+  <text x="600" y="492" text-anchor="middle" fill="#dbe3ff" font-family="Arial, sans-serif" font-size="28">placeholder asset</text>
+</svg>
