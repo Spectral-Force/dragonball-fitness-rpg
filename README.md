@@ -20,6 +20,6 @@ Do not commit personal save files to a public repository.
 
 ## v5 Mobile Layout
 
-The current build uses the v5 cascade dashboard for phone use. The top banner depends on `icons/top_banner.png`, so keep that file beside the icon set and include it in the service worker app shell when updating the PWA cache.
+The current build uses the v5 cascade dashboard for phone use. The top banner depends on `icons/top_banner.png`, so keep that file beside the icon set and include it in the service worker app shell when updating the PWA cache. Saga banner artwork is embedded from `images/saga_banners`, so it should render even when the game is moved as a single HTML file.
 
 Character comparison targets include all seven stats, including Technique (`TEC`), with benchmark stats balanced by archetype.
