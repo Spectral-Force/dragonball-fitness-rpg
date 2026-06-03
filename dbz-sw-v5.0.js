@@ -1,11 +1,12 @@
-const CACHE_NAME = 'dbz-fitness-rpg-v5.0.9';
+const CACHE_NAME = 'dbz-fitness-rpg-v5.0.10';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './icons/top_banner.png'
 ];
 
 self.addEventListener('install', event => {
