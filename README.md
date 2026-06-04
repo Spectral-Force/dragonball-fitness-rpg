@@ -24,6 +24,12 @@ The current build uses the v5 cascade dashboard for phone use. The top banner de
 
 Character comparison targets include all seven stats, including Technique (`TEC`), with benchmark stats balanced by archetype.
 
+## Fitness Plan
+
+The top banner `Plan` button opens a four-week, seven-day editable planner. Planned days can hold the same exercises as the Training logger, calculate target loads from saved 1-rep maxes, use editable intensity profiles such as `85 | 80 | 75` or `75 | 70 | 65`, and round weights by equipment type.
+
+Planner days can be copied to another day, copied week-to-week, auto-filled with daily meditation or mobility, saved as templates, or loaded directly into the Training session for final edits before logging.
+
 ## Race Balance Notes
 
 Transformation availability is race-gated. Earthlings, Saiyans, Half-Saiyans, Namekians, and Perfect Androids can use true Kaioken forms, Ultra Instinct forms, and Ultra Ego, while Frieza Race and Majin characters cannot. Half-Saiyans can use most Saiyan transformations, but not Super Saiyan 4, Legendary/Broly forms, or god/Super Saiyan Blue branches.
