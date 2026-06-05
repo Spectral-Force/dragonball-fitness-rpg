@@ -30,7 +30,7 @@ The top banner `Plan` tab opens a full in-game four-week, seven-day editable pla
 
 The default 1-rep max table is seeded from Tim's old `fitness_old.xlsx` workbook, using the `W1RM 85 80 75` sheet. Existing save-file 1RM edits are preserved over these defaults.
 
-Planner days can be copied to another day, copied week-to-week, auto-filled with daily meditation or mobility, saved as templates, or loaded directly into the Training session for final edits before logging.
+Planner days can be copied to another day, copied week-to-week, auto-filled with daily meditation or mobility, saved as templates, loaded from existing Training templates for further editing, or loaded directly into the Training session for final edits before logging.
 
 Planner machine rounding has two built-in stack profiles: the standard machine stack `9,14,19,23,29,36,43,50,57,63,70,77,84,90,97,104`, and a doubled cable-machine stack for cable fly/crossover work using total load across both cables.
 
