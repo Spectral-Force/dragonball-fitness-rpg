@@ -32,6 +32,8 @@ The default 1-rep max table is seeded from Tim's old `fitness_old.xlsx` workbook
 
 Planner days can be copied to another day, copied week-to-week, auto-filled with daily meditation or mobility, saved as templates, or loaded directly into the Training session for final edits before logging.
 
+Planner machine rounding has two built-in stack profiles: the standard machine stack `9,14,19,23,29,36,43,50,57,63,70,77,84,90,97,104`, and a doubled cable-machine stack for cable fly/crossover work using total load across both cables.
+
 ## Race Balance Notes
 
 Transformation availability is race-gated. Earthlings, Saiyans, Half-Saiyans, Namekians, and Perfect Androids can use true Kaioken forms, Ultra Instinct forms, and Ultra Ego, while Frieza Race and Majin characters cannot. Half-Saiyans can use most Saiyan transformations, but not Super Saiyan 4, Legendary/Broly forms, or god/Super Saiyan Blue branches.
