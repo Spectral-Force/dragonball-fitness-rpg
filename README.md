@@ -26,7 +26,9 @@ Character comparison targets include all seven stats, including Technique (`TEC`
 
 ## Fitness Plan
 
-The top banner `Plan` button opens a four-week, seven-day editable planner. Planned days can hold the same exercises as the Training logger, calculate target loads from saved 1-rep maxes, use editable intensity profiles such as `85 | 80 | 75` or `75 | 70 | 65`, and round weights by equipment type.
+The top banner `Plan` tab opens a full in-game four-week, seven-day editable planner. Planned days can hold the same exercises as the Training logger, calculate target loads from saved 1-rep maxes, use editable intensity profiles such as `85 | 80 | 75` or `75 | 70 | 65`, and round weights by equipment type.
+
+The default 1-rep max table is seeded from Tim's old `fitness_old.xlsx` workbook, using the `W1RM 85 80 75` sheet. Existing save-file 1RM edits are preserved over these defaults.
 
 Planner days can be copied to another day, copied week-to-week, auto-filled with daily meditation or mobility, saved as templates, or loaded directly into the Training session for final edits before logging.
 
