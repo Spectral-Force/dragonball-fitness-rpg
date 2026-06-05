@@ -34,6 +34,14 @@ Planner days can be copied to another day, copied week-to-week, auto-filled with
 
 Planner machine rounding has two built-in stack profiles: the standard machine stack `9,14,19,23,29,36,43,50,57,63,70,77,84,90,97,104`, and a doubled cable-machine stack for cable fly/crossover work using total load across both cables.
 
+## Rest And Deterioration
+
+Training now includes a `Recovery -> Rest Day` entry. A rest day grants a recovery bonus equal to `2.5% x days since last rest`, capped at `10%`, multiplied against the stat gains from the shorter of the days since last rest or the previous four days. Rest day gains are stored as recovery workout entries and are recalculated from the workout log, so retroactive exercise edits update the chart correctly.
+
+No-training deterioration starts after two consecutive non-training days. Rest days, meditation, and walking count as logged activity, but they do not reset this no-training timer; running and ordinary training do. The daily decay is `0.5%` per active decay day and clamps at the race-specific starting stats for Power Level 5.
+
+Weekly variety deterioration checks the nine dashboard activity groups: chest, back, shoulders, arms, legs, core, cardio, martial, and flexibility. Missing the target of four exercises in a group creates a weighted stat reduction based on the stats that group normally trains, capped at `1.5%` per stat per completed week. Meditation counts for martial coverage, and walking counts for cardio coverage.
+
 ## Race Balance Notes
 
 Transformation availability is race-gated. Earthlings, Saiyans, Half-Saiyans, Namekians, and Perfect Androids can use true Kaioken forms, Ultra Instinct forms, and Ultra Ego, while Frieza Race and Majin characters cannot. Half-Saiyans can use most Saiyan transformations, but not Super Saiyan 4, Legendary/Broly forms, or god/Super Saiyan Blue branches.
