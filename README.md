@@ -36,7 +36,7 @@ Planner machine rounding has two built-in stack profiles: the standard machine s
 
 ## Rest And Deterioration
 
-Training now includes a `Recovery -> Rest Day` entry. A rest day grants a recovery bonus equal to `2.5% x days since last rest`, capped at `10%`, multiplied against the stat gains from the shorter of the days since last rest or the previous four days. Rest day gains are stored as recovery workout entries and are recalculated from the workout log, so retroactive exercise edits update the chart correctly.
+Training now includes a `Recovery -> Rest Day` entry. A rest day grants a recovery bonus equal to `2.5% x real training days since last rest`, capped at `10%`, multiplied against the stat gains from the shorter of the training days since last rest or the previous four training days. Inactive calendar days do not build this bonus. Rest day gains are stored as recovery workout entries and are recalculated from the workout log, so retroactive exercise edits update the chart correctly.
 
 No-training deterioration starts after two consecutive non-training days. Rest days, meditation, and walking count as logged activity, but they do not reset this no-training timer; running and ordinary training do. The daily decay is `0.5%` per active decay day and clamps at the race-specific starting stats for Power Level 5.
 

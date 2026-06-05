@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dbz-fitness-rpg-v5.0.43';
+const CACHE_NAME = 'dbz-fitness-rpg-v5.0.44';
 const APP_SHELL = [
   './',
   './index.html',
