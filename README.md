@@ -22,7 +22,7 @@ Do not commit personal save files to a public repository.
 
 The current build uses the v5 cascade dashboard for phone use. The top banner depends on `icons/top_banner.png`, so keep that file beside the icon set and include it in the service worker app shell when updating the PWA cache. Saga banner artwork is embedded from `images/saga_banners`, so it should render even when the game is moved as a single HTML file.
 
-Character comparison targets include all seven stats, including Technique (`TEC`), with benchmark stats balanced by archetype.
+Character comparison targets include all seven stats, including Technique (`TEC`). Benchmark and partner target stats are generated from the same v5 Power Level scoring weights used by the player, while God Level targets use the low-scale God Ki model rather than raw `GKI`.
 
 ## Fitness Plan
 
