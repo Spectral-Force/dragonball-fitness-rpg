@@ -3197,6 +3197,7 @@
             "ultra_ego": versionedAsset("./images/transformations/ultra_ego.webp"),
             "ultra_instinct_sign": versionedAsset("./images/transformations/ultra_instinct_sign.webp"),
             "warrior_fusion": versionedAsset("./images/transformations/warrior_fusion.webp"),
+            "race_route_backdrop": versionedAsset("./images/v6/race_route_backdrop.webp"),
             "hybrid": versionedAsset("./images/v6/races/hybrid.webp"),
             "v6_hero": versionedAsset("./images/v6/v6_hero.webp")
         };
@@ -9045,8 +9046,8 @@
             { id: 'saiyan_saga', name: 'A Saiyan\'s Pride', icon: '🌕', desc: 'Clear the Vegeta Saga', check: (char) => char.completedSagas.includes('dbz_vegeta') },
             { id: 'frieza_saga', name: 'The Legend Awakens', icon: '⚡', desc: 'Clear the Frieza Saga — and unlock Super Saiyan', check: (char) => char.completedSagas.includes('dbz_frieza') },
             { id: 'over_9000', name: 'IT\'S OVER 9000!', icon: '💥', desc: 'Reach a Power Level of 9,001', check: (char) => getPowerLevel(char) >= 9001 },
-            { id: 'first_transform', name: 'A New Power Awakens', icon: '✨', desc: 'Unlock your first transformation', check: (char) => char.unlockedTransformations.length > 1 },
-            { id: 'ss_unlocked', name: 'Legendary Super Saiyan', icon: '🔥', desc: 'Unlock Super Saiyan', check: (char) => char.unlockedTransformations.includes('super_saiyan') },
+            { id: 'first_transform', name: 'A New Power Awakens', icon: '✨', desc: 'Unlock your first usable transformation', check: (char) => getAvailableTransformations(char).length > 1 },
+            { id: 'ss_unlocked', name: 'Legendary Super Saiyan', icon: '🔥', desc: 'Unlock Super Saiyan', check: (char) => getAvailableTransformations(char).some(trans => trans.id === 'super_saiyan') },
             { id: 'first_ability', name: 'Technique Learned', icon: '🌀', desc: 'Purchase your first ability', check: (char) => Object.keys(char.purchasedAbilities).length >= 1 },
             { id: 'ten_abilities', name: 'Student of the Martial Arts', icon: '📚', desc: 'Master 10 abilities', check: (char) => Object.keys(char.purchasedAbilities).length >= 10 },
             { id: 'streak_7', name: 'Seven Day Saiyan', icon: '📅', desc: 'Train 7 days in a row', check: (char) => char.currentStreak >= 7 },
@@ -9103,9 +9104,9 @@
             { id: 'unlock_beast',  name: "Gohan's True Awakening", icon: '🦁', desc: 'Unlock Gohan Beast',                  check: (char) => char.unlockedTransformations.includes('beast_gohan') },
             { id: 'unlock_orange', name: 'The Orange Warrior',    icon: '🟠', desc: 'Unlock Orange Piccolo',                check: (char) => char.unlockedTransformations.includes('orange_piccolo') },
             { id: 'unlock_black_frieza', name: 'Ten Years in the Dark', icon: '🖤', desc: 'Unlock Black Frieza',            check: (char) => char.unlockedTransformations.includes('black_frieza') },
-            { id: 'transforms_10', name: 'Shape Shifter',         icon: '🔄', desc: 'Unlock 10 transformations',            check: (char) => char.unlockedTransformations.length >= 10 },
-            { id: 'transforms_20', name: 'Master of Forms',       icon: '🎭', desc: 'Unlock 20 transformations',            check: (char) => char.unlockedTransformations.length >= 20 },
-            { id: 'transforms_30', name: 'Walking Power Scaling', icon: '📊', desc: 'Unlock 30 transformations',            check: (char) => char.unlockedTransformations.length >= 30 },
+            { id: 'transforms_10', name: 'Shape Shifter',         icon: '🔄', desc: 'Unlock 10 transformations',            check: (char) => getAvailableTransformations(char).length >= 10 },
+            { id: 'transforms_20', name: 'Master of Forms',       icon: '🎭', desc: 'Unlock 20 transformations',            check: (char) => getAvailableTransformations(char).length >= 20 },
+            { id: 'transforms_30', name: 'Walking Power Scaling', icon: '📊', desc: 'Unlock 30 transformations',            check: (char) => getAvailableTransformations(char).length >= 30 },
 
             // ── ABILITY MILESTONES ───────────────────────────────────────────
             { id: 'abilities_5',   name: 'Technique Collector',   icon: '📖', desc: 'Master 5 abilities',                   check: (char) => Object.keys(char.purchasedAbilities).length >= 5 },
@@ -9485,10 +9486,9 @@
         }
 
         function getAvailableTransformations(char) {
-            const race = normalizeRaceKey(char?.race || 'earthling');
-            return getUnlockedTransformationIds(char)
-                .map(id => getTransformationById(id))
-                .filter(trans => transformationAllowedForRace(race, trans));
+            window.DBZ_V6_PROGRESSION.ensureCharacterProgression(char, { transformations: TRANSFORMATIONS });
+            const usable = new Set(window.DBZ_V6_PROGRESSION.getUsableTransformationIds(char, TRANSFORMATIONS));
+            return TRANSFORMATIONS.filter(trans => usable.has(trans.id));
         }
 
         function getActiveTransformation(char) {
@@ -10624,22 +10624,30 @@
         function unlockTransformationsAndAbilities(char) {
             const level = getLevel(char);
             if (!Array.isArray(char.unlockedTransformations)) char.unlockedTransformations = ['base'];
+            const basePower = typeof getBasePowerLevel === 'function' ? getBasePowerLevel(char) : 1;
+            window.DBZ_V6_PROGRESSION.syncCharacterProgression(char, {
+                transformations: TRANSFORMATIONS,
+                abilities: ABILITIES,
+                basePower,
+                getMasteryRank: (candidate, id) => typeof getTransformationMasteryRank === 'function' ? getTransformationMasteryRank(candidate, id) : 'G',
+                getActivePartnerIds: candidate => typeof getActivePartners === 'function' ? getActivePartners(candidate) : (candidate.activePartners || [])
+            });
             TRANSFORMATIONS.forEach(trans => {
-                if (!transformationAllowedForRace(char?.race, trans)) return;
+                if (!window.DBZ_V6_PROGRESSION.isRaceCompatible(char, trans)) return;
                 if (!char.unlockedTransformations.includes(trans.id)) {
-                    const pl = getPowerLevel(char);
                     const reqs = trans.reqs || {};
-                    if ((!reqs.sagaId || char.completedSagas.includes(reqs.sagaId)) &&
-                        (!reqs.level || level >= reqs.level) &&
-                        (!(reqs.PL || reqs.pl || reqs.powerLevel) || pl >= Number(reqs.PL || reqs.pl || reqs.powerLevel)) &&
-                        STATS.every(s => !reqs[s] || char.stats[s] >= reqs[s])) {
+                    const sagaReady = !reqs.sagaId || (typeof isSagaAtLeast === 'function'
+                        ? isSagaAtLeast(char, reqs.sagaId, 'unlocked')
+                        : char.completedSagas.includes(reqs.sagaId));
+                    const baseReady = !(reqs.PL || reqs.pl || reqs.powerLevel) || basePower >= Number(reqs.PL || reqs.pl || reqs.powerLevel);
+                    if (sagaReady && (!reqs.level || level >= reqs.level) && baseReady &&
+                        STATS.every(stat => !reqs[stat] || char.stats[stat] >= reqs[stat]) &&
+                        window.DBZ_V6_PROGRESSION.isTransformationUsable(char, trans)) {
                         char.unlockedTransformations.push(trans.id);
                     }
                 }
             });
-            char.equippedTransformations = (char.equippedTransformations || ['base']).filter(id => id === 'base' || getAvailableTransformations(char).some(trans => trans.id === id)).slice(0, getTransformationSlotLimit(char));
-            if (!char.equippedTransformations.length) char.equippedTransformations = ['base'];
-            if (!getAvailableTransformations(char).some(trans => trans.id === char.activeTransformation)) char.activeTransformation = char.equippedTransformations[0] || 'base';
+            window.DBZ_V6_PROGRESSION.sanitizePrimaryState(char, TRANSFORMATIONS);
         }
 
         function isSameDay(d1, d2) {
@@ -11109,6 +11117,9 @@
         }
 
         function saveState(options = {}) {
+            Object.values(state.characters || {}).forEach(char => {
+                window.DBZ_V6_PROGRESSION?.ensureCharacterProgression(char, { transformations: TRANSFORMATIONS });
+            });
             state.version = GAME_VERSION;
             state.schemaVersion = SAVE_SCHEMA_VERSION;
             state.lastSavedAt = new Date().toISOString();
@@ -14869,7 +14880,7 @@ function getAbilityArt(abilityId) {
                 <div class="race-panel-shell" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
                     <div style="flex:1;">
                         <div class="race-picker" id="racePicker">
-                            <button type="button" class="race-picker-button" onclick="toggleRacePicker(event)">
+                            <button type="button" class="race-picker-button" onclick="toggleRacePicker(event)" ${char.raceLockedAt ? 'disabled aria-describedby="raceLockExplanation"' : ''}>
                                 <img src="${VISUAL_ASSETS.races[race] || VISUAL_ASSETS.races.earthling}" class="race-thumb" alt="${info.label} thumbnail">
                                 <span class="race-picker-label">${info.label}</span>
                                 <span class="race-picker-chevron">▼</span>
@@ -14877,6 +14888,7 @@ function getAbilityArt(abilityId) {
                             <div class="race-picker-menu" id="racePickerMenu">${options}</div>
                         </div>
                         <div class="race-desc" style="font-size:0.8rem;color:#888;margin-top:0.3rem;">${info.desc}</div>
+                        ${char.raceLockedAt ? '<div id="raceLockExplanation" class="race-desc">Race locked after training began. Create another character to try a different route.</div>' : ''}
                     </div>
                 </div>`;
         }
@@ -14895,9 +14907,13 @@ function getAbilityArt(abilityId) {
 
         function changeRace(newRace) {
             const char = getActiveCharacter();
+            const permission = window.DBZ_V6_PROGRESSION.canChangeRace(char, newRace);
+            if (!permission.ok) return v6Alert(permission.reason, 'warning');
             const shouldSwapStarterStats = !hasCharacterTrainingProgress(char) && isStarterStatProfile(char);
-            char.race = newRace;
-            if (shouldSwapStarterStats) applyStartingStatsForRace(char, newRace);
+            char.race = window.DBZ_V6_PROGRESSION.normalizeRaceKey(newRace);
+            if (shouldSwapStarterStats) applyStartingStatsForRace(char, char.race);
+            char.raceProgression = null;
+            window.DBZ_V6_PROGRESSION.ensureCharacterProgression(char, { transformations: TRANSFORMATIONS });
             char.setupComplete = true;
             saveState();
             renderRacePanel();
@@ -18206,51 +18222,16 @@ function getAbilityArt(abilityId) {
             const SAGA_STATUS_RANK = { locked: 0, unlocked: 1, cleared: 2, mastered: 3 };
             const SAGA_TARGET_WEEKS = { ...window.DBZ_V6_CONFIG.sagaTargetWeeks };
 
-            const SAGA_REBALANCE_ROWS = [
-                { id: 'db_pilaf', week: 0, baseEndPL: 12, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 12 },
-                { id: 'db_tournament', week: 4, baseEndPL: 90, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 90 },
-                { id: 'db_red_ribbon', week: 8, baseEndPL: 110, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 110 },
-                { id: 'db_general_blue', week: 12, baseEndPL: 125, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 125 },
-                { id: 'db_commander_red', week: 16, baseEndPL: 140, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 140 },
-                { id: 'db_baba', week: 20, baseEndPL: 155, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 155 },
-                { id: 'db_tien', week: 24, baseEndPL: 190, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 190 },
-                { id: 'db_king_piccolo', week: 28, baseEndPL: 260, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 260 },
-                { id: 'db_piccolo_jr', week: 32, baseEndPL: 416, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 416 },
-                { id: 'dbz_raditz', week: 38, baseEndPL: 1200, transform: 'Base', transformMultiplier: 1, effectiveEndPL: 1200 },
-                { id: 'dbz_vegeta', week: 44, baseEndPL: 8000, transform: 'Kaioken x3', transformMultiplier: 3, effectiveEndPL: 24000 },
-                { id: 'dbz_namek', week: 52, baseEndPL: 53000, transform: 'Kaioken x10', transformMultiplier: 10, effectiveEndPL: 530000 },
-                { id: 'dbz_ginyu', week: 60, baseEndPL: 530000, transform: 'Kaioken x20', transformMultiplier: 20, effectiveEndPL: 10600000 },
-                { id: 'dbz_frieza', week: 68, baseEndPL: 3000000, transform: 'Super Saiyan', transformMultiplier: 50, effectiveEndPL: 150000000 },
-                { id: 'dbz_garlic', week: 74, baseEndPL: 3200000, transform: 'Super Saiyan', transformMultiplier: 50, effectiveEndPL: 160000000 },
-                { id: 'dbz_trunks', week: 80, baseEndPL: 4000000, transform: 'Super Saiyan', transformMultiplier: 50, effectiveEndPL: 200000000 },
-                { id: 'dbz_androids', week: 86, baseEndPL: 5500000, transform: 'Super Saiyan', transformMultiplier: 50, effectiveEndPL: 275000000 },
-                { id: 'dbz_cell_imperfect', week: 92, baseEndPL: 7500000, transform: 'Ascended Super Saiyan', transformMultiplier: 55, effectiveEndPL: 412500000 },
-                { id: 'dbz_cell_perfect', week: 98, baseEndPL: 10000000, transform: 'Full Power Super Saiyan', transformMultiplier: 60, effectiveEndPL: 600000000 },
-                { id: 'dbz_cell_games', week: 104, baseEndPL: 12000000, transform: 'Super Saiyan 2', transformMultiplier: 100, effectiveEndPL: 1200000000 },
-                { id: 'dbz_other_world', week: 109, baseEndPL: 15000000, transform: 'Super Saiyan 2', transformMultiplier: 100, effectiveEndPL: 1500000000 },
-                { id: 'dbz_great_saiyaman', week: 114, baseEndPL: 19000000, transform: 'Super Saiyan 2', transformMultiplier: 100, effectiveEndPL: 1900000000 },
-                { id: 'dbz_world_tournament', week: 119, baseEndPL: 24000000, transform: 'Super Saiyan 2', transformMultiplier: 100, effectiveEndPL: 2400000000 },
-                { id: 'dbz_babidi', week: 124, baseEndPL: 30000000, transform: 'Super Saiyan 2', transformMultiplier: 100, effectiveEndPL: 3000000000 },
-                { id: 'dbz_buu', week: 129, baseEndPL: 38000000, transform: 'Super Saiyan 3', transformMultiplier: 400, effectiveEndPL: 15200000000 },
-                { id: 'dbz_fusion', week: 134, baseEndPL: 50000000, transform: 'Super Saiyan 3', transformMultiplier: 400, effectiveEndPL: 20000000000 },
-                { id: 'dbz_kid_buu', week: 140, baseEndPL: 62000000, transform: 'Super Saiyan 3', transformMultiplier: 400, effectiveEndPL: 24800000000 },
-                { id: 'daima_demon', week: 146, baseEndPL: 66000000, transform: 'Super Saiyan 3', transformMultiplier: 400, effectiveEndPL: 26400000000 },
-                { id: 'daima_supreme_kai', week: 150, baseEndPL: 68000000, transform: 'Super Saiyan 3', transformMultiplier: 400, effectiveEndPL: 27200000000 },
-                { id: 'daima_true_form', week: 154, baseEndPL: 72000000, transform: 'True Daima Form', transformMultiplier: 800, effectiveEndPL: 57600000000 },
-                { id: 'dbs_beerus', week: 160, baseEndPL: 75000000, transform: 'Super Saiyan God', transformMultiplier: 1000, effectiveEndPL: 75000000000, gplReq: 1 },
-                { id: 'dbs_golden_frieza', week: 166, baseEndPL: 90000000, transform: 'Super Saiyan Blue', transformMultiplier: 2000, effectiveEndPL: 180000000000, gplReq: 50 },
-                { id: 'dbs_universe6', week: 172, baseEndPL: 100000000, transform: 'Super Saiyan Blue', transformMultiplier: 2000, effectiveEndPL: 200000000000, gplReq: 160 },
-                { id: 'dbs_copy_vegeta', week: 178, baseEndPL: 120000000, transform: 'Super Saiyan Blue', transformMultiplier: 2000, effectiveEndPL: 240000000000, gplReq: 510 },
-                { id: 'dbs_future_trunks', week: 184, baseEndPL: 150000000, transform: 'Super Saiyan Blue Kaioken', transformMultiplier: 3500, effectiveEndPL: 525000000000, gplReq: 1600 },
-                { id: 'dbs_universe_survival', week: 192, baseEndPL: 200000000, transform: 'Ultra Instinct Omen', transformMultiplier: 10000, effectiveEndPL: 2000000000000, gplReq: 5200 },
-                { id: 'dbs_galactic_patrol', week: 200, baseEndPL: 260000000, transform: 'Mastered Ultra Instinct', transformMultiplier: 50000, effectiveEndPL: 13000000000000, gplReq: 17000 },
-                { id: 'dbs_granolah', week: 208, baseEndPL: 300000000, transform: 'Mastered Ultra Instinct', transformMultiplier: 80000, effectiveEndPL: 24000000000000, gplReq: 54000 }
-            ].map(row => {
-                const week = SAGA_TARGET_WEEKS[row.id] ?? row.week;
-                const baseEndPL = window.DBZ_V6_CONFIG.basePowerTargetForWeek(week);
-                const effectiveEndPL = Math.max(1, Math.round(baseEndPL * Math.max(1, Number(row.transformMultiplier) || 1)));
-                return { ...row, week, baseEndPL, effectiveEndPL };
-            });
+            const SAGA_REBALANCE_ROWS = window.DBZ_V6_PROGRESSION_CONFIG.sagas.map(row => ({
+                id: row.id,
+                week: row.targetWeek,
+                unlockWeek: row.unlockWeek,
+                baseEndPL: row.baseEndPL,
+                transform: window.DBZ_V6_PROGRESSION_CONFIG.stateBands.find(band => band.id === row.stateBandId)?.label || 'Base',
+                transformMultiplier: row.stateMultiplier,
+                effectiveEndPL: row.effectiveEndPL,
+                gplReq: row.godPowerRequirement
+            }));
             const SAGA_REBALANCE_BY_ID = Object.fromEntries(SAGA_REBALANCE_ROWS.map(row => [row.id, row]));
 
             const SAGA_AFFINITY_PRESETS = {
@@ -18441,15 +18422,15 @@ function getAbilityArt(abilityId) {
 
             function v5_patchSagaData() {
                 v5_reorderSagasForRebalance();
-                STORY_CONFIG.finalSagaUnlockXP = Math.round((SAGA_TARGET_WEEKS.dbs_granolah || 208) * STORY_CONFIG.weeklyStoryXPCap);
-                STORY_CONFIG.finalSagaClearXP = STORY_CONFIG.finalSagaUnlockXP;
+                STORY_CONFIG.finalSagaUnlockXP = window.DBZ_V6_PROGRESSION_CONFIG.sagas.find(saga => saga.id === 'dbs_granolah').storyUnlockXP;
+                STORY_CONFIG.finalSagaClearXP = window.DBZ_V6_PROGRESSION_CONFIG.sagas.find(saga => saga.id === 'dbs_granolah').storyClearXP;
                 SAGAS.forEach((saga, index) => {
                     const row = SAGA_REBALANCE_BY_ID[saga.id] || null;
                     const prevRow = index > 0 ? (SAGA_REBALANCE_BY_ID[SAGAS[index - 1]?.id] || null) : null;
                     const nextRow = SAGAS[index + 1] ? (SAGA_REBALANCE_BY_ID[SAGAS[index + 1].id] || null) : null;
-                    const unlockWeek = row?.week ?? (SAGA_TARGET_WEEKS[saga.id] ?? Math.round(index * 5.5));
+                    const unlockWeek = row?.unlockWeek ?? row?.week ?? (SAGA_TARGET_WEEKS[saga.id] ?? Math.round(index * 5.5));
                     const nextWeek = nextRow?.week ?? unlockWeek;
-                    const clearWeek = row ? (nextRow ? Math.max(unlockWeek + 1, Math.round(unlockWeek + (nextWeek - unlockWeek) * 0.65)) : unlockWeek) : Math.max(unlockWeek + 6, Math.round(unlockWeek * 1.45));
+                    const clearWeek = row ? (nextRow ? Math.max(unlockWeek + 1, Math.round(unlockWeek + (nextWeek - unlockWeek) * 0.65)) : (row.week ?? unlockWeek)) : Math.max(unlockWeek + 6, Math.round(unlockWeek * 1.45));
                     const masterWeek = row ? Math.max(clearWeek + 2, Math.round(unlockWeek + (nextWeek - unlockWeek) * 1.15)) : Math.max(clearWeek + 10, Math.round(unlockWeek * 1.8 + 20));
                     const focusClearWindow = Math.max(1, clearWeek - unlockWeek);
                     const focusMasterWindow = Math.max(1, masterWeek - clearWeek);
@@ -18784,6 +18765,7 @@ function getAbilityArt(abilityId) {
                 if (!char.partnerLevels || typeof char.partnerLevels !== 'object') char.partnerLevels = {};
                 Object.keys(char.partnerLevels).forEach(partnerId => ensurePartnerProgressV5(char, partnerId));
                 if (!isGodKiUnlocked(char)) char.stats.GKI = 0;
+                window.DBZ_V6_PROGRESSION.ensureCharacterProgression(char, { transformations: TRANSFORMATIONS });
                 return char;
             }
 
@@ -18877,98 +18859,43 @@ function getAbilityArt(abilityId) {
             }
 
             function getV6EquippedState(char) {
-                const equippedIds = Array.isArray(char?.equippedTransformations) && char.equippedTransformations.length
-                    ? char.equippedTransformations
-                    : [char?.activeTransformation || 'base'];
-                const states = equippedIds.map(id => getTransformationById(id)).filter(Boolean);
-                const strongest = states.sort((a, b) =>
-                    Number(b?.powerMultiplier || b?.mult || 1) - Number(a?.powerMultiplier || a?.mult || 1)
-                )[0] || getTransformationById('base');
+                const sanitized = window.DBZ_V6_PROGRESSION.sanitizePrimaryState(char, TRANSFORMATIONS);
+                const states = sanitized.equippedIds.map(id => getTransformationById(id)).filter(Boolean);
+                const primary = getTransformationById(sanitized.primaryId) || getTransformationById('base');
                 return {
-                    ids: equippedIds,
+                    ids: sanitized.equippedIds,
                     states,
-                    strongest,
-                    multiplier: Math.max(1, Number(strongest?.powerMultiplier || strongest?.mult || 1))
+                    strongest: primary,
+                    primary,
+                    multiplier: Math.max(1, Number(primary?.powerMultiplier || primary?.mult || 1))
                 };
             }
 
-            function getV6RouteSupportReadiness(char) {
-                const abilityCount = Math.min(3, (char?.equippedAbilities || []).filter(id => char?.purchasedAbilities?.[id]).length);
-                const partnerCount = Math.min(3, typeof getActivePartners === 'function' ? getActivePartners(char).length : 0);
-                const masteryReady = Object.values(char?.transformationMastery || {}).some(value =>
-                    Number(value?.xp || value?.totalXp || value || 0) >= 2400
-                );
-                return Math.min(0.36, abilityCount * 0.05 + partnerCount * 0.04 + (masteryReady ? 0.06 : 0));
-            }
-
-            function getV6AbsorptionCount(char, kind) {
-                return Object.keys(char?.raceAbsorptions?.[kind]?.absorbed || {}).length;
+            function getV6ProgressionContext(char, basePower = null) {
+                return {
+                    transformations: TRANSFORMATIONS,
+                    abilities: ABILITIES,
+                    basePower,
+                    getBasePower: candidate => getBaseDisplayPowerFromStats(candidate?.stats || {}, false, getRaceStartingPowerScore(candidate?.race || 'earthling')),
+                    getMasteryRank: (candidate, id) => getTransformationMasteryRank(candidate, id),
+                    getActivePartnerIds: candidate => typeof getActivePartners === 'function' ? getActivePartners(candidate) : (candidate?.activePartners || [])
+                };
             }
 
             function getRaceRoutePowerMultiplier(char) {
-                const equipped = getV6EquippedState(char);
-                const race = normalizeRaceKey(char?.race);
-                const nextSaga = SAGAS.find(saga => !(char?.completedSagas || []).includes(saga.id)) || SAGAS[SAGAS.length - 1];
-                const targetState = Math.max(1, Number(SAGA_REBALANCE_BY_ID[nextSaga?.id]?.transformMultiplier) || 1);
-                const support = getV6RouteSupportReadiness(char);
-                const hasRaceState = expectedRace => equipped.states.some(state => normalizeRaceKey(state?.race) === expectedRace);
-                const hasHumanState = equipped.ids.some(id => id.startsWith('human_') || id.startsWith('kaioken_'));
-                let equivalent = equipped.multiplier;
-                let label = equipped.strongest?.name || 'Base Form';
-                let source = 'equipped transformation';
-
-                if (race === 'earthling' && hasHumanState) {
-                    equivalent = Math.max(equivalent, targetState * Math.min(1.04, 0.72 + support));
-                    label = 'Earthling Potential State';
-                    source = 'equipped potential, techniques and mastered support';
-                } else if (race === 'namekian' && hasRaceState('namekian')) {
-                    equivalent = Math.max(equivalent, targetState * Math.min(1.04, 0.72 + support));
-                    label = 'Namekian Assimilation State';
-                    source = 'equipped Namekian state and assimilation mastery';
-                } else if (race === 'hybrid' && hasRaceState('hybrid')) {
-                    equivalent = Math.max(equivalent, targetState * Math.min(1.06, 0.76 + support));
-                    label = 'Hybrid Awakening';
-                    source = 'equipped awakening and potential mastery';
-                } else if (race === 'frieza_race' && hasRaceState('frieza_race')) {
-                    equivalent = Math.max(equivalent, targetState * Math.min(1.08, 0.80 + support));
-                    label = 'Released Evolution';
-                    source = 'equipped released form and control mastery';
-                } else if (race === 'android') {
-                    const absorptions = getV6AbsorptionCount(char, 'android');
-                    const required = targetState <= 130 ? 0 : targetState <= 1000 ? 1 : targetState <= 10000 ? 2 : 3;
-                    if (absorptions >= required && (hasRaceState('android') || absorptions > 0)) {
-                        equivalent = Math.max(equivalent, targetState * Math.min(1.08, 0.50 + absorptions * 0.12 + support));
-                        label = 'Android Evolution State';
-                        source = `${absorptions} absorption${absorptions === 1 ? '' : 's'}, equipped evolution and support mastery`;
-                    }
-                } else if (race === 'majin') {
-                    const absorptions = getV6AbsorptionCount(char, 'majin');
-                    const required = targetState <= 100 ? 0 : targetState <= 1000 ? 1 : targetState <= 10000 ? 2 : 3;
-                    if (absorptions >= required && (absorptions > 0 || equipped.multiplier >= targetState)) {
-                        equivalent = Math.max(equivalent, targetState * Math.min(1.10, 0.54 + absorptions * 0.12 + support));
-                        label = 'Majin Absorption State';
-                        source = `${absorptions} absorption${absorptions === 1 ? '' : 's'} and copied support mastery`;
-                    }
-                }
-
-                return {
-                    multiplier: Math.max(1, roundToSignificantNumber(equivalent, 6)),
-                    equippedMultiplier: equipped.multiplier,
-                    targetState,
-                    label,
-                    source,
-                    supportReadiness: support
-                };
+                const base = getBaseDisplayPowerFromStats(char?.stats || {}, false, getRaceStartingPowerScore(char?.race || 'earthling'));
+                return window.DBZ_V6_PROGRESSION.getRacePowerState(char, getV6ProgressionContext(char, base));
             }
 
             function getSagaUnlockPowerLevel(char) {
                 const base = typeof getBaseDisplayPowerFromStats === 'function'
                     ? getBaseDisplayPowerFromStats(char?.stats || {}, false, getRaceStartingPowerScore(char?.race || 'earthling'))
                     : (typeof getPowerLevelFromStats === 'function' ? getPowerLevelFromStats(char?.stats || {}) : 0);
-                const route = getRaceRoutePowerMultiplier(char);
-                return Math.max(1, roundToSignificantNumber(base * route.multiplier, 6));
+                const route = window.DBZ_V6_PROGRESSION.getRacePowerState(char, getV6ProgressionContext(char, base));
+                return window.DBZ_V6_PROGRESSION.calculateEffectivePower(base, route);
             }
             window.getRaceRoutePowerMultiplier = getRaceRoutePowerMultiplier;
+            window.getV6ProgressionContext = getV6ProgressionContext;
             window.getSagaUnlockPowerLevel = getSagaUnlockPowerLevel;
 
             function canUnlockSaga(char, saga, index = null) {
@@ -19153,9 +19080,7 @@ function getAbilityArt(abilityId) {
             };
 
             function getPrimaryTransformationPowerMultiplier(char) {
-                const id = getEquippedTransformations(char)[0] || 'base';
-                const trans = getTransformationById(id);
-                return Math.max(1, Number(trans?.powerMultiplier || trans?.mult || 1));
+                return window.DBZ_V6_PROGRESSION.getPrimaryStateMultiplier(char, TRANSFORMATIONS);
             }
             window.getPrimaryTransformationPowerMultiplier = getPrimaryTransformationPowerMultiplier;
 
@@ -19234,7 +19159,12 @@ function getAbilityArt(abilityId) {
                 if (!isGodKiUnlocked(char)) return 0;
                 const trans = getActiveTransformation(char);
                 const godMult = trans?.tags?.includes('god') ? Math.max(1, Math.sqrt(Number(trans.powerMultiplier || trans.mult || 1)) / 6) : 1;
-                return Math.round(getGodPowerLevelFromStats(char?.stats || {}) * godMult);
+                const rawGodPower = Math.round(getGodPowerLevelFromStats(char?.stats || {}) * godMult);
+                const basePower = getBasePowerLevel(char);
+                return window.DBZ_V6_PROGRESSION.calculateGodPowerRoute(char, {
+                    ...getV6ProgressionContext(char, basePower),
+                    rawGodPower
+                });
             };
 
             function getTransformationStatVector(trans) {
@@ -19273,13 +19203,7 @@ function getAbilityArt(abilityId) {
 
             function getEquippedTransformations(char) {
                 ensureV5CharacterShallow(char);
-                if (!Array.isArray(char.equippedTransformations)) char.equippedTransformations = [char.activeTransformation || 'base'];
-                if (!char.equippedTransformations.length) char.equippedTransformations = ['base'];
-                const unlocked = new Set(getUnlockedTransformationIds(char));
-                const available = new Set(getAvailableTransformations(char).map(trans => trans.id));
-                return char.equippedTransformations
-                    .filter((id, idx, arr) => id && arr.indexOf(id) === idx && getTransformationById(id) && (id === 'base' || (unlocked.has(id) && available.has(id))))
-                    .slice(0, getTransformationSlotLimit(char));
+                return window.DBZ_V6_PROGRESSION.sanitizePrimaryState(char, TRANSFORMATIONS).equippedIds;
             }
             window.getEquippedTransformations = getEquippedTransformations;
 
@@ -19773,6 +19697,8 @@ function getAbilityArt(abilityId) {
                 if (idx >= getTransformationSlotLimit(char)) return;
                 if (!transformationId) transformationId = idx === 0 ? 'base' : '';
                 if (transformationId && !getUnlockedTransformationIds(char).includes(transformationId)) return v6Alert('Unlock that transformation first.');
+                const candidateTransformation = transformationId ? getTransformationById(transformationId) : null;
+                if (candidateTransformation && !window.DBZ_V6_PROGRESSION.isTransformationUsable(char, candidateTransformation)) return v6Alert('That form is discovered but not usable by this race/path yet.');
                 char.equippedTransformations = char.equippedTransformations.filter((id, pos) => pos === idx || id !== transformationId);
                 if (transformationId) char.equippedTransformations[idx] = transformationId;
                 else char.equippedTransformations.splice(idx, 1);
@@ -21757,9 +21683,9 @@ function getAbilityArt(abilityId) {
             }
 
 function getRaceAbsorptionKind(char) {
-                const race = normalizeRaceKey(char?.race);
-                if (race === 'android') return 'android';
-                if (race === 'majin') return 'majin';
+                const routeId = window.DBZ_V6_PROGRESSION.routeIdForCharacter(char);
+                if (routeId === 'android_bio') return 'android';
+                if (routeId === 'majin') return 'majin';
                 return null;
             }
 
@@ -21839,63 +21765,8 @@ function getRaceAbsorptionKind(char) {
             window.applyAbsorbedPartnerEffects = applyAbsorbedPartnerEffects;
 
             function attemptRaceAbsorption(partnerId) {
-                const char = getActiveCharacter();
-                const kind = getRaceAbsorptionKind(char);
-                if (!kind) return v6Alert('Absorption is only available to Perfect Android and Majin races.');
-                ensureSupplementalCharacter(char);
-                const partner = getPartnerById(partnerId);
-                if (!partner || !getOwnedPartners(char).includes(partnerId)) return v6Alert('Unlock this partner before trying to absorb them.');
-                const state = getAbsorptionStateForKind(char, kind);
-                if (state.absorbed[partnerId]) return v6Alert(`${partner.name} has already been absorbed.`);
-                const cooldown = getAbsorptionCooldown(char, partnerId, kind);
-                if (cooldown.active) return v6Alert(`Absorption is cooling down for ${Math.ceil(cooldown.remainingMs / 86400000)} more day(s).`);
-                const progress = normalizePartnerLevelProgress(char, partnerId);
-                const playerLevel = Math.max(1, getLevel(char));
-                const partnerLevel = Math.max(1, progress.level);
-                const ratio = Math.max(0.000001, kind === 'majin' ? partnerLevel / (7 * playerLevel) : partnerLevel / playerLevel);
-                const roll = Math.random();
-                const score = roll + 0.257 * Math.log(ratio);
-                const success = score < 0.5;
-                const cooldownUntil = new Date(Date.now() + 7 * 86400000).toISOString();
-                state.cooldowns[partnerId] = cooldownUntil;
-                if (success) {
-                    const effects = createAbsorbedEffectSnapshot(char, partnerId, kind);
-                    state.absorbed[partnerId] = {
-                        partnerId,
-                        partnerName: partner.name,
-                        level: partnerLevel,
-                        absorbedAt: new Date().toISOString(),
-                        absorbPercent: kind === 'majin' ? 100 : 10,
-                        effects
-                    };
-                } else if (kind === 'android') {
-                    const newLevel = Math.max(1, Math.floor(partnerLevel * 0.75));
-                    progress.level = newLevel;
-                    progress.xp = 0;
-                    progress.totalXp = Math.min(progress.totalXp, getPartnerCumulativeXPForLevel(partner, newLevel));
-                    progress.unlockedMilestones = (progress.unlockedMilestones || []).filter(id => {
-                        const milestone = (PARTNER_MILESTONES[partnerId] || []).find(item => item.id === id);
-                        return !milestone || milestone.level <= newLevel;
-                    });
-                }
-                state.attempts.unshift({
-                    partnerId,
-                    partnerName: partner.name,
-                    kind,
-                    at: new Date().toISOString(),
-                    roll: +roll.toFixed(4),
-                    ratio: +ratio.toFixed(4),
-                    score: +score.toFixed(4),
-                    success,
-                    level: partnerLevel
-                });
-                state.attempts = state.attempts.slice(0, 30);
-                saveState();
-                renderTransformations();
-                renderDashboard();
-                if (typeof renderCharacters === 'function') renderCharacters();
-                const absorbText = kind === 'majin' ? '100% of their current boost is now permanent.' : '10% of their current boost is now permanent.';
-                v6Alert(success ? `${partner.name} absorbed. ${absorbText}` : `${partner.name} resisted absorption.${kind === 'android' ? ' They lost 25% of their levels.' : ''} Try again in 7 days.`);
+                if (typeof window.installV6RaceCore === 'function') return window.installV6RaceCore(partnerId);
+                return v6Alert('The bounded core manager is still loading. Please try again.');
             }
             window.attemptRaceAbsorption = attemptRaceAbsorption;
 
@@ -21906,23 +21777,25 @@ function getRaceAbsorptionKind(char) {
                 const playerLevel = Math.max(1, getLevel(char));
                 const owned = getOwnedPartners(char).map(id => getPartnerById(id)).filter(Boolean)
                     .sort((a, b) => (normalizePartnerLevelProgress(char, b.id).level - normalizePartnerLevelProgress(char, a.id).level) || a.name.localeCompare(b.name));
-                const title = kind === 'majin' ? 'Majin Absorption' : 'Perfect Android Absorption';
+                const title = kind === 'majin' ? 'Majin Absorption Cores' : 'Bio-Android Adaptation Templates';
                 const copy = kind === 'majin'
-                    ? 'Attempt to permanently copy 100% of an unlocked partner boost. Failure only starts a 7 day cooldown for that partner.'
-                    : 'Attempt to permanently copy 10% of an unlocked partner boost. Failure costs that partner 25% of their levels and starts a 7 day cooldown.';
+                    ? 'Install one bounded partner trait in an Absorption Core. The partner remains owned and never loses levels.'
+                    : 'Install one bounded partner trait as an Adaptation Template. The partner remains owned and never loses levels.';
                 const formula = kind === 'majin'
-                    ? 'Roll + 0.257 ln(partner level / (7 x player level)) must be below 0.5.'
-                    : 'Roll + 0.257 ln(partner level / player level) must be below 0.5.';
+                    ? 'Quality comes from partner level, bond and tier. Preview and confirmation are required before installation.'
+                    : 'Quality comes from partner level, bond and tier. Preview and confirmation are required before installation.';
                 const rows = owned.length ? owned.map(partner => {
                     const progress = normalizePartnerLevelProgress(char, partner.id);
                     const absorbed = state?.absorbed?.[partner.id];
                     const cooldown = getAbsorptionCooldown(char, partner.id, kind);
                     const chance = Math.round(getAbsorptionSuccessChance(kind, progress.level, playerLevel) * 100);
-                    const lockedText = absorbed ? `Absorbed ${absorbed.absorbPercent}% at Lv ${absorbed.level}` : cooldown.active ? `${Math.ceil(cooldown.remainingMs / 86400000)}d cooldown` : `${chance}% chance`;
+                    const routeEntries = kind === 'majin' ? (char.raceProgression?.absorptionCores || []) : (char.raceProgression?.adaptationTemplates || []);
+                    const installedCore = routeEntries.find(entry => entry.sourcePartnerId === partner.id);
+                    const lockedText = installedCore ? `Installed · quality ${Math.round(installedCore.quality || 0)}` : 'Preview bounded trait';
                     return `<div class="v5t-absorb-row ${absorbed ? 'absorbed' : ''}">
                         <img class="v5t-row-thumb" src="${v5tEscape(getPartnerImageSrc(partner))}" alt="${v5tEscape(partner.name)}">
                         <div><strong>${v5tEscape(partner.name)}</strong><span class="v5t-sub">Lv ${progress.level} - ${lockedText}</span><span class="v5t-effect-line">${v5tEscape(typeof renderPartnerEffectSummary === 'function' ? renderPartnerEffectSummary(partner, progress) : partner.desc || '')}</span></div>
-                        <button class="btn-small v5t-action" ${absorbed || cooldown.active ? 'disabled' : `onclick="attemptRaceAbsorption('${v5tEscape(partner.id)}')"`}>${absorbed ? 'Absorbed' : 'Absorb'}</button>
+                        <button class="btn-small v5t-action" onclick="attemptRaceAbsorption('${v5tEscape(partner.id)}')">${absorbed ? 'Refresh' : 'Preview'}</button>
                     </div>`;
                 }).join('') : '<div class="v5t-empty">Unlock partners before using absorption.</div>';
                 return `<section class="v5t-panel v5t-absorb-panel"><h2>${title}</h2><p class="v5t-note">${v5tEscape(copy)}</p><p class="v5t-note">${v5tEscape(formula)}</p><div class="v5t-absorb-list">${rows}</div></section>`;
@@ -25010,7 +24883,7 @@ function getRaceAbsorptionKind(char) {
         }
 
         function v5tRaceAllowed(char, trans) {
-            return transformationAllowedForRace(char?.race || 'earthling', trans);
+            return window.DBZ_V6_PROGRESSION.isRaceCompatible(char, trans);
         }
 
         function v5tImageSrc(id) {
@@ -25061,19 +24934,20 @@ function getRaceAbsorptionKind(char) {
         }
 
         function v5tStatusKey(char, trans) {
-            const unlocked = getUnlockedTransformationIds(char).includes(trans.id);
-            const equipped = getEquippedTransformations(char).includes(trans.id);
-            const primary = (getEquippedTransformations(char)[0] || 'base') === trans.id;
-            if (primary) return 'primary';
-            if (equipped) return 'equipped';
-            if (unlocked) return 'unlocked';
-            if (!v5tRaceAllowed(char, trans)) return 'race';
-            return v5tTransformationRequirements(char, trans).ok ? 'available' : 'locked';
+            const status = window.DBZ_V6_PROGRESSION.getTransformationStatus(char, trans, {
+                transformations: TRANSFORMATIONS,
+                abilities: ABILITIES,
+                basePower: getBasePowerLevel(char),
+                getMasteryRank: (candidate, id) => getTransformationMasteryRank(candidate, id),
+                getActivePartnerIds: candidate => getActivePartners(candidate)
+            });
+            return status.key === 'echo' ? 'equipped' : status.key === 'usable' ? 'unlocked' : status.key;
         }
 
         function v5tStatusLabel(char, trans) {
             const status = v5tStatusKey(char, trans);
-            if (status === 'race') return 'Race Locked';
+            if (status === 'race' || status === 'discovered') return 'Discovered · Wrong Path';
+            if (status === 'breakthrough') return 'Breakthrough Available';
             if (status === 'primary') return 'Primary';
             return status.charAt(0).toUpperCase() + status.slice(1);
         }
@@ -25083,14 +24957,18 @@ function getRaceAbsorptionKind(char) {
             ensureV5Character(char);
             const trans = v5tFindTransformation(id);
             if (!trans) return;
-            const check = v5tTransformationRequirements(char, trans);
-            if (!check.ok) return v6Alert(check.blockers.join('\n'));
-            if (!char.unlockedTransformations.includes(id)) char.unlockedTransformations.push(id);
+            window.DBZ_V6_PROGRESSION.syncCharacterProgression(char, getV6ProgressionContext(char, getBasePowerLevel(char)));
+            if (!char.unlockedTransformations.includes(id)) {
+                const check = v5tTransformationRequirements(char, trans);
+                if (!check.ok) return v6Alert(check.blockers.join('\n'));
+                if (!window.DBZ_V6_PROGRESSION.isTransformationUsable(char, trans)) return v6Alert('Complete the listed race breakthrough first.');
+                char.unlockedTransformations.push(id);
+            }
             saveState();
             renderTransformations();
             renderDashboard();
             if (typeof renderStats === 'function') renderStats();
-            if (typeof showGameEvent === 'function') showGameEvent({ type: 'transform', title: 'New Transformation', name: trans.name, detail: trans.desc, color: trans.color });
+            if (typeof showGameEvent === 'function') showGameEvent({ type: 'transform', title: 'New State', name: trans.name, detail: trans.desc, color: trans.color });
         }
         window.unlockV5Transformation = v5tUnlockTransformation;
 
@@ -25098,6 +24976,8 @@ function getRaceAbsorptionKind(char) {
             const char = getActiveCharacter();
             ensureV5Character(char);
             if (!getUnlockedTransformationIds(char).includes(id)) return v6Alert('Unlock that transformation first.');
+            const candidate = v5tFindTransformation(id);
+            if (!window.DBZ_V6_PROGRESSION.isTransformationUsable(char, candidate)) return v6Alert('That discovered form is not usable by this race/path yet.');
             if (mode === 'primary') {
                 setTransformationSlot(0, id);
                 v5SelectedTransformationId = id;
@@ -25131,7 +25011,7 @@ function getRaceAbsorptionKind(char) {
                 if (equippedIndex > 0) buttons.push(`<button class="btn-small v5t-action" onclick="clearV5TransformationSlot(${equippedIndex})">Unequip</button>`);
                 return buttons.join('');
             }
-            if (status === 'available') return `<button class="btn-small btn-success v5t-action" onclick="unlockV5Transformation('${trans.id}')">Unlock</button>`;
+            if (status === 'available' || status === 'breakthrough') return `<button class="btn-small btn-success v5t-action" onclick="unlockV5Transformation('${trans.id}')">${status === 'breakthrough' ? 'Complete Breakthrough' : 'Unlock'}</button>`;
             return `<button class="btn-small v5t-action" disabled>LOCK ${v5tEscape(v5tRequirementText(char, trans))}</button>`;
         }
 

@@ -256,7 +256,7 @@
         if (fileSize > MAX_IMPORT_BYTES) throw new Error('The import is larger than the 10 MB safety limit.');
         if (!isPlainObject(candidate)) throw new Error('The import must be a game-save object.');
         const schema = Number(candidate.schemaVersion || 1);
-        const currentSchema = Number(root.DBZ_V6_CONFIG?.schemaVersion || 31);
+        const currentSchema = Number(root.DBZ_V6_CONFIG?.schemaVersion || 32);
         if (!Number.isInteger(schema) || schema < 1 || schema > currentSchema) {
             throw new Error(`Unsupported save schema: ${candidate.schemaVersion}.`);
         }
@@ -282,6 +282,35 @@
                 }
             }
             if (character.workoutLog && !Array.isArray(character.workoutLog)) throw new Error(`Character ${id} has an invalid workout history.`);
+            if (character.raceProgression !== undefined) {
+                if (!isPlainObject(character.raceProgression)) throw new Error(`Character ${id} has invalid race progression.`);
+                const progression = character.raceProgression;
+                const progressionConfig = root.DBZ_V6_PROGRESSION_CONFIG;
+                if (progression.routeId && progressionConfig && !progressionConfig.routes?.[progression.routeId]) {
+                    throw new Error(`Character ${id} has an unsupported race route.`);
+                }
+                if (progression.androidPath && !['infinite', 'bio'].includes(progression.androidPath)) {
+                    throw new Error(`Character ${id} has an invalid Android path.`);
+                }
+                if (progression.divineDiscipline && !['native', 'instinct', 'destruction'].includes(progression.divineDiscipline)) {
+                    throw new Error(`Character ${id} has an invalid divine discipline.`);
+                }
+                if (progression.namekianBranch && !['warrior', 'dragon', 'balanced'].includes(progression.namekianBranch)) {
+                    throw new Error(`Character ${id} has an invalid Namekian branch.`);
+                }
+                if (progression.earnedTiers && (!Array.isArray(progression.earnedTiers) || progression.earnedTiers.length > 20)) {
+                    throw new Error(`Character ${id} has invalid earned race tiers.`);
+                }
+                if (progression.absorptionCores && (!Array.isArray(progression.absorptionCores) || progression.absorptionCores.length > 3)) {
+                    throw new Error(`Character ${id} has too many absorption cores.`);
+                }
+                if (progression.adaptationTemplates && (!Array.isArray(progression.adaptationTemplates) || progression.adaptationTemplates.length > 3)) {
+                    throw new Error(`Character ${id} has too many adaptation templates.`);
+                }
+                if (progression.breakthroughs && !isPlainObject(progression.breakthroughs)) {
+                    throw new Error(`Character ${id} has invalid breakthrough records.`);
+                }
+            }
         }
         validateNode(candidate);
         return structuredClone(candidate);

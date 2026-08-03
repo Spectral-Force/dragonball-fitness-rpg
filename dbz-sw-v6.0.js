@@ -2,7 +2,7 @@
 
 importScripts('./v6-asset-manifest.js');
 
-const VERSION = 'v6.0.0-20260724.10';
+const VERSION = 'v6.3.0-20260803.1';
 const SHELL_CACHE = `dbz-fitness-shell-${VERSION}`;
 const ASSET_CACHE = `dbz-fitness-assets-${VERSION}`;
 const ENTRY = './DragonBall_Fitness_RPG_v6.0.html';
@@ -13,15 +13,19 @@ const APP_SHELL = [
     './dbz-v6.css',
     './dbz-v6-overrides.css',
     './dbz-v6-config.js',
+    './dbz-v6-progression-config.js',
+    './dbz-v6-progression-core.js',
     './v6-asset-manifest.js',
     './dbz-v6-storage.js',
     './dbz-v6.js',
     './dbz-v6-enhancements.js',
+    './dbz-v6-race-ui.js',
     './icons/icon-192.png',
     './icons/icon-512.png',
     './icons/apple-touch-icon.png',
     './images/cover_a.jpg',
     './images/v6/v6_hero.webp',
+    './images/v6/race_route_backdrop.webp',
     ...(Object.values(self.DBZ_V6_ASSETS || {}).filter(asset => /^\.\/images\/v6\/races\//i.test(asset)))
 ];
 

@@ -1,83 +1,94 @@
-# v6 Power Scaling Specification
+# v6.3 Power Scaling Specification
 
 ## Decision
 
-The campaign is designed around a 156-week optimal route, not an automatic 156-week timer. Three independent gates must agree:
+The main campaign targets 156 weeks of optimal play, not an automatic 156-week timer. Four independent layers must agree:
 
-1. consistent training produces durable Base Fitness PL;
-2. Story XP and Focus XP establish campaign order and meaningful engagement;
-3. an equipped transformation or race-equivalent state supplies the anime-scale jump required by the current saga.
+1. consistent exercise grows durable Base Fitness PL;
+2. Story XP and saga order establish campaign position;
+3. Focus XP and visible route support prove engagement;
+4. one equipped primary transformation or earned fixed race tier supplies the anime-scale state multiplier.
 
-Missing one of those layers delays progression. Raw exercise statistics alone cannot clear the Super-era campaign near year three.
+Missing a layer delays progression. Exercise statistics alone cannot clear the Super-era campaign near year three, and the route system never borrows the multiplier of the next opponent.
 
 ## Formula
 
 `Base Fitness PL = 5 + positive weighted change from the race's starting stats`
 
-Weights are STR 1.10, END 0.95, AGI 1.00, VIT 0.90, SPI 1.15 and TEC 1.05. GKI is tracked separately for God Power requirements and is not used to disguise normal fitness growth.
+Weights are STR 1.10, END 0.95, AGI 1.00, VIT 0.90, SPI 1.15 and TEC 1.05. GKI remains a separate God Power input.
 
-`Effective PL = Base Fitness PL × max(equipped form, qualified race-equivalent state)`
+`Effective PL = Base Fitness PL x max(primary transformation, highest earned fixed race tier)`
 
-Only one state multiplier wins. Partner, ability, wish, saga and training effects improve earned stats and state readiness; they do not form an unlimited direct-PL multiplication chain.
+Only the sanitized primary state contributes a transformation multiplier. Echo slots retain their documented training-effect weights but contribute no story PL, God PL, route qualification or mastery credit. Partners, abilities, wishes and training branches accelerate earned stats and route support; they do not form a hidden direct-PL chain.
 
-## Three-year base curve
+## Canonical schedule and bands
 
-The original Dragon Ball targets remain deliberately close to their readable early values: 12 at Pilaf and 416 at Piccolo Jr. From week 24, the target grows log-linearly to 75,000 Base Fitness PL at week 156.
+`dbz-v6-progression-config.js` is the single saga/state-band source. Its main fixed multipliers are:
 
-The target is calibrated with a normalised Tim-plan acceptance rate of 240 base-power points per active week:
+| Band | Multiplier | Signature saga | Target week |
+|---|---:|---|---:|
+| Base | 1x | Raditz | 29 |
+| First Break | 3x | Vegeta | 33 |
+| Surge | 10x | Namek | 39 |
+| Mastered Surge | 20x | Ginyu | 45 |
+| Z State | 50x | Frieza | 51 |
+| Evolved Z | 100x | Cell Games | 78 |
+| Ultimate Mortal | 400x | Buu | 97 |
+| Ascendant Mortal | 800x | Daima True Form | 116 |
+| Divine | 1,000x | Beerus | 120 |
+| Divine Mastery | 2,000x | Golden Frieza | 125 |
+| Transcendent | 3,500x | Future Trunks | 138 |
+| Tournament Apex | 10,000x | Universe Survival | 144 |
+| Cosmic Mastery | 50,000x | Galactic Patrol | 150 |
+| Finale | 80,000x | Granolah | 156 |
 
-| Route | Attendance | Bounded growth | Expected finale |
-|---|---:|---:|---:|
-| Optimal Tim plan/loadout | 92% | 2.22× | week 153–156 |
-| Sensible developed loadout | 86% | 1.82× | about week 200 |
-| Casual developed loadout | 78% | 1.45× | about week 277 |
-| Tim plan, major systems ignored | 92% | 1.00× | about week 340 |
+Every route has one immutable answer at every band. A tier's support, resource, Base PL and Focus XP requirements determine whether it is earned; they never change its multiplier. Granolah's finale breakthrough is exposed at week 153 and the saga clear gate remains week 156, so the state needed to clear the finale is obtainable within the saga rather than rewarded afterwards.
 
-The runtime era soft cap derives its session target from the same saga-to-saga base deltas. Excessive single sessions have a 0.10 overflow exponent, so useful extra work still counts but a typo or marathon cannot skip an era.
+## Support quality
 
-## State curve
+Breakthrough support is a visible 0-100 score:
 
-Saga rows retain an explicit intended state band: Base, Kaioken 3/10/20, Super Saiyan 50, Cell-era 55–100, Super Saiyan 3 at 400, Daima/GT-like 800, God 1,000, Blue 2,000, late divine states 3,500–80,000. The effective target for a saga is its recomputed base target multiplied by its state band.
+- 35 points from the qualifying primary state's mastery; Base never counts;
+- 25 points from developed equipped abilities;
+- 20 points from developed active partners;
+- 20 points from the route's resource or signature mechanic.
 
-Transformation and ability stat requirements are normalised to the recomputed base target for their saga. Their narrative, saga and level gates remain.
+Level-1 filler provides little credit. Primary mastery, support components and route resource are displayed separately in the Race Path panel.
 
-## Race parity
+## Route contract
 
-- Saiyan uses the equipped transformation multiplier directly.
-- Earthling requires an equipped potential/Kaioken state. Developed abilities, partners and mastery can raise that state to the era-equivalent band.
-- Hybrid requires an equipped hybrid awakening; potential mastery fills the sparse jumps between SS2/Potential and Beast.
-- Namekian requires an equipped Namekian state; fusion/assimilation mastery provides era-equivalent scaling.
-- Frieza Race requires an equipped released form; control mastery bridges the late gap between Black Frieza and the final state band.
-- Android can use Cell-style forms through the Cell era. Later bands require permanent absorptions: one through roughly 1,000×, two through 10,000× and three beyond it.
-- Majin may use universal techniques early. Above 100× it requires permanent absorptions on the same one/two/three progression.
+- Earthling uses fixed technique, potential, mastery and native divine-control tiers.
+- Saiyan uses Kaioken, Super Saiyan, Primal/Daima and divine specialization milestones.
+- Hybrid uses heritage, rage, Ultimate and Beast milestones.
+- Namekian uses a Warrior, Dragon or Balanced assimilation branch and Giant, fusion, ascendant and Orange milestones.
+- Infinite Energy Android uses reactor, frame, overclock and engine mastery without absorption.
+- Bio-Android uses up to three deterministic Adaptation Templates plus fixed evolution tiers.
+- Majin uses Body Control, Regeneration Mastery and up to three deterministic Absorption Cores.
+- Frieza Race uses controlled release, evolved, Golden and Black mastery milestones.
 
-Race-equivalent readiness is deliberately less than 100% without developed support. Three useful abilities, three active partners and at least C-rank state mastery are the intended optimal configuration. Direct forms remain valid if their multiplier is stronger.
+Ultra Instinct and Ultra Ego are explicit optional Divine Discipline branches. Every route has a competitive native finale and does not require a shared discipline.
 
-## Story and mastery
+Majin cores and Bio-Android templates copy exactly one bounded trait. Quality derives from partner tier and development, a collection is capped at three, no random failure destroys partner levels, and the source partner cannot also contribute through the active team while its copied trait is equipped.
 
-Story XP is capped at 50 per week and saga targets are mapped to the 0–156 schedule. Focus XP rewards engagement with the chosen saga; it does not replace power or force dead waiting after the other gates are ready. Daima occurs at weeks 110–116, Beerus at 120 and Granolah at 156.
+## Integrity controls
 
-Transformation mastery is 25% faster than the inherited curve and uses G, F, E, D, C, B, A, S, Z and Super ranks. Mastery affects route readiness and ongoing efficiency, not an unbounded multiplier.
+- Race locks after the first meaningful workout; another race uses another character.
+- Cross-race discoveries remain preserved but dormant and unusable.
+- One permission engine governs unlock, both equip paths, save repair, PL, God PL and collections.
+- Invalid primary equipment falls visibly to Base.
+- State multipliers are never multiplied together.
+- Imported numeric values and collections remain bounded.
+- Session growth uses diminishing returns and era soft caps; post-story growth remains open.
 
-## Exploit controls
+## Deterministic acceptance
 
-- Imported and typed numeric values have plausible maximums.
-- Erroneous input can be undone immediately.
-- Training, partner and loadout buckets use diminishing-return caps.
-- The analytical extreme-stack ceiling is 2.60× growth.
-- Era session soft caps prevent one extreme workout from skipping campaign phases.
-- Partner power affects earned stats/XP, never the displayed PL directly.
-- The strongest state wins; state multipliers are not multiplied together.
-- Post-story progression removes the era cap so long-term growth remains open.
+`analysis/v6_race_simulator.mjs` imports the real configuration, progression core and shared Tim-plan fixture. The v6.3 release gate is:
 
-## Simulation acceptance
+| Profile | Required result | Verified result |
+|---|---:|---:|
+| Optimal developed loadout | weeks 153-159, race spread <=6 | week 156 for all routes, spread 0 |
+| Sensible developed loadout | weeks 180-210 | week 200 for all routes |
+| Casual developed loadout | weeks 240-300 | week 279 for all routes |
+| RPG systems ignored | no free finale scaling | stalled for all routes |
 
-`tests/v6-balance.test.mjs` and `analysis/v6_balance_model.mjs` cover:
-
-- light, standard, Tim-plan and optimised training;
-- uninterrupted play, normal missed weeks, deloads and illness/holiday gaps;
-- all seven races;
-- raw/minimal, sensible, optimal and extreme stacking assumptions;
-- final-base sensitivity and boost caps.
-
-The simulation is a transparent normalised acceptance model, not a replacement for future telemetry. After real players accumulate 8–12 weeks of history, compare median recent Base Fitness PL/week and route-readiness attainment with these assumptions before changing thresholds.
+The simulator is a reproducible balance contract rather than a substitute for player telemetry. After 8-12 weeks of real v6.3 history, compare median Base Fitness PL growth, support attainment and stalled blockers before making small threshold adjustments. Do not restore target-following normalization.

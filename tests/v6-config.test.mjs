@@ -5,8 +5,8 @@ import "../dbz-v6-config.js";
 const config = globalThis.DBZ_V6_CONFIG;
 
 test("v6 reports one consistent campaign and schema version", () => {
-    assert.equal(config.version, "v6.0");
-    assert.equal(config.schemaVersion, 31);
+    assert.equal(config.version, "v6.3");
+    assert.equal(config.schemaVersion, 32);
     assert.equal(config.campaignWeeks, 156);
     assert.equal(config.targetWeekForSaga("dbs_granolah"), 156);
 });

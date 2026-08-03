@@ -81,10 +81,10 @@
             identity: 'Permanent assimilation growth with durable battle states'
         },
         android: {
-            label: 'Android / Bio-Android',
-            route: 'Infinite-energy upgrades, overclocking, absorption and evolution',
+            label: 'Android',
+            route: 'Choose an Infinite Energy reactor path or a Bio-Android adaptation path',
             stateLabel: 'Evolution State',
-            identity: 'Stable power, high efficiency and absorbed adaptation'
+            identity: 'Stable power and recovery, or bounded partner-trait adaptation'
         },
         frieza_race: {
             label: "Frieza's Race",
@@ -172,8 +172,8 @@
     }
 
     root.DBZ_V6_CONFIG = Object.freeze({
-        version: 'v6.0',
-        schemaVersion: 31,
+        version: 'v6.3',
+        schemaVersion: 32,
         campaignWeeks: 156,
         campaignYears: 3,
         expectedGoodRouteWeeks: Object.freeze([180, 210]),

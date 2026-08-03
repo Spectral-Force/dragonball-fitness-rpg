@@ -206,6 +206,7 @@ globalThis.DBZ_V6_ASSETS = Object.freeze({
   "images/transformations/ultra_ego.webp": "./images/transformations/ultra_ego.webp?h=0f9e094ff439",
   "images/transformations/ultra_instinct_sign.webp": "./images/transformations/ultra_instinct_sign.webp?h=12d76b4ca0a6",
   "images/transformations/warrior_fusion.webp": "./images/transformations/warrior_fusion.webp?h=e3080308c5e1",
+  "images/v6/race_route_backdrop.webp": "./images/v6/race_route_backdrop.webp?h=65466a60eb39",
   "images/v6/races/android.webp": "./images/v6/races/android.webp?h=e880b6f7905b",
   "images/v6/races/earthling.webp": "./images/v6/races/earthling.webp?h=5da56aa8bff1",
   "images/v6/races/frieza_race.webp": "./images/v6/races/frieza_race.webp?h=d590bd8c764d",

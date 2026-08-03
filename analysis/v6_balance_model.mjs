@@ -1,4 +1,5 @@
 import "../dbz-v6-config.js";
+import { buildRaceSimulationReport } from "./v6_race_simulator.mjs";
 
 const config = globalThis.DBZ_V6_CONFIG;
 
@@ -21,7 +22,8 @@ export const raceRouteRequirements = Object.freeze({
     saiyan: { mechanic: "Equipped transformation", absorptionCount: 0 },
     hybrid: { mechanic: "Equipped awakening and potential mastery", absorptionCount: 0 },
     namekian: { mechanic: "Equipped fusion/Orange state and assimilation mastery", absorptionCount: 0 },
-    android: { mechanic: "Equipped evolution plus three late-game absorptions", absorptionCount: 3 },
+    android_infinite: { mechanic: "Reactor Charge and Frame Mastery", absorptionCount: 0 },
+    android_bio: { mechanic: "Evolution plus three bounded Adaptation Templates", absorptionCount: 3 },
     frieza_race: { mechanic: "Equipped released form and control mastery", absorptionCount: 0 },
     majin: { mechanic: "Three late-game partner absorptions", absorptionCount: 3 }
 });
@@ -60,13 +62,15 @@ export function sagaTargets() {
 }
 
 export function raceParityMatrix() {
+    const simulation = buildRaceSimulationReport();
+    const simulatedWeeks = new Map(simulation.profiles.optimal.map(result => [result.route, result.finaleWeek]));
     return Object.entries(raceRouteRequirements).map(([race, route]) => ({
         race,
         route: route.mechanic,
         requiredAbsorptions: route.absorptionCount,
-        targetWeek: config.campaignWeeks,
+        targetWeek: simulatedWeeks.get(race),
         targetBasePower: config.balanceAcceptance.targetBasePowerAtFinale,
-        competitive: true
+        competitive: Number.isFinite(simulatedWeeks.get(race)) && simulatedWeeks.get(race) >= 153 && simulatedWeeks.get(race) <= 159
     }));
 }
 

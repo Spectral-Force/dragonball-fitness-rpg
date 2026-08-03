@@ -50,9 +50,10 @@ test("missed weeks, deloads and illness remain bounded delays rather than decay"
 
 test("race routes are explicit and extreme stacking is capped", () => {
     const parity = raceParityMatrix();
-    assert.equal(parity.length, 7);
+    assert.equal(parity.length, 8);
     assert.ok(parity.every(row => row.competitive && row.targetWeek === 156));
-    assert.equal(parity.find(row => row.race === "android").requiredAbsorptions, 3);
+    assert.equal(parity.find(row => row.race === "android_infinite").requiredAbsorptions, 0);
+    assert.equal(parity.find(row => row.race === "android_bio").requiredAbsorptions, 3);
     assert.equal(parity.find(row => row.race === "majin").requiredAbsorptions, 3);
     assert.equal(boundedExploitGrowthMultiplier(100, 100, 100), 2.6);
 });

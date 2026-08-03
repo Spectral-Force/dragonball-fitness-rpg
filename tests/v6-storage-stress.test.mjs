@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import "../dbz-v6-config.js";
+import "../dbz-v6-progression-config.js";
 
 globalThis.addEventListener = () => {};
 globalThis.document = {
@@ -34,8 +35,8 @@ function character(overrides = {}) {
 
 function saveWith(activeCharacter) {
     return {
-        version: "v6.0",
-        schemaVersion: 31,
+        version: "v6.3",
+        schemaVersion: 32,
         activeCharacter: "tim",
         characters: { tim: activeCharacter }
     };
@@ -64,11 +65,11 @@ test("a detailed five-year save remains comfortably below the import ceiling", (
 
 test("malformed, future-schema, invalid-date and outlier imports are rejected", () => {
     assert.throws(
-        () => globalThis.DBZV6Storage.validateImportedSave({ schemaVersion: 31, characters: [] }),
+        () => globalThis.DBZV6Storage.validateImportedSave({ schemaVersion: 32, characters: [] }),
         /characters collection/
     );
     assert.throws(
-        () => globalThis.DBZV6Storage.validateImportedSave({ ...saveWith(character()), schemaVersion: 32 }),
+        () => globalThis.DBZV6Storage.validateImportedSave({ ...saveWith(character()), schemaVersion: 33 }),
         /Unsupported save schema/
     );
     assert.throws(

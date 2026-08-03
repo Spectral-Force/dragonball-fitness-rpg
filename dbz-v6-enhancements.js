@@ -115,21 +115,22 @@
     }
 
     function equippedPowerState(character) {
-        const ids = Array.isArray(character?.equippedTransformations) && character.equippedTransformations.length
-            ? character.equippedTransformations
-            : [character?.activeTransformation || 'base'];
-        const states = ids.map(id => typeof getTransformationById === 'function' ? getTransformationById(id) : null).filter(Boolean);
-        const strongest = states.sort((a, b) => Number(b.powerMultiplier || b.mult || 1) - Number(a.powerMultiplier || a.mult || 1))[0];
-        const equippedMultiplier = Math.max(1, Number(strongest?.powerMultiplier || strongest?.mult || 1));
+        const ids = new Set(['base', ...(character?.unlockedTransformations || []), ...(character?.equippedTransformations || [])]);
+        const transformations = [...ids]
+            .map(id => typeof getTransformationById === 'function' ? getTransformationById(id) : null)
+            .filter(Boolean);
+        const sanitized = root.DBZ_V6_PROGRESSION?.sanitizePrimaryState(character, transformations);
+        const primary = transformations.find(state => state.id === (sanitized?.primaryId || 'base'));
+        const equippedMultiplier = Math.max(1, Number(primary?.powerMultiplier || primary?.mult || 1));
         const route = typeof root.getRaceRoutePowerMultiplier === 'function'
             ? root.getRaceRoutePowerMultiplier(character)
-            : { multiplier: equippedMultiplier, label: strongest?.name || 'Base', source: 'equipped transformation' };
+            : { multiplier: equippedMultiplier, label: primary?.name || 'Base', source: 'primary transformation' };
         return {
-            name: route.label || strongest?.name || 'Base',
+            name: route.label || primary?.name || 'Base',
             multiplier: Math.max(equippedMultiplier, Number(route.multiplier) || 1),
-            equippedName: strongest?.name || 'Base',
+            equippedName: primary?.name || 'Base',
             equippedMultiplier,
-            source: route.source || 'equipped transformation'
+            source: route.source || 'primary transformation'
         };
     }
 

@@ -17,9 +17,12 @@ test("v6 is a split canonical build without embedded base64 assets", () => {
     assert.ok(game.length < 2_000_000);
     assert.doesNotMatch(html + game, /data:image\/[^;,]+;base64/i);
     assert.match(html, /dbz-v6-config\.js/);
+    assert.match(html, /dbz-v6-progression-config\.js/);
+    assert.match(html, /dbz-v6-progression-core\.js/);
     assert.match(html, /v6-asset-manifest\.js/);
     assert.match(html, /dbz-v6-storage\.js/);
     assert.match(html, /dbz-v6-enhancements\.js/);
+    assert.match(html, /dbz-v6-race-ui\.js/);
 });
 
 test("mobile viewport, safe notifications and accessibility helpers are wired", () => {
@@ -44,8 +47,12 @@ test("PWA shell references real v6 files", () => {
         "dbz-v6.css",
         "dbz-v6.js",
         "dbz-v6-enhancements.js",
+        "dbz-v6-progression-config.js",
+        "dbz-v6-progression-core.js",
+        "dbz-v6-race-ui.js",
         "v6-asset-manifest.js",
-        "images/v6/v6_hero.webp"
+        "images/v6/v6_hero.webp",
+        "images/v6/race_route_backdrop.webp"
     ];
     expected.forEach(relative => {
         assert.ok(fs.existsSync(path.join(root, relative)), `${relative} is missing`);
@@ -62,6 +69,8 @@ test("v6 art uses hashed runtime assets and a coherent race portrait set", () =>
         assert.match(assetManifestSource, new RegExp(`${race}\\.webp\\?h=[a-f0-9]{12}`));
         assert.match(game, new RegExp(`images/v6/races/${race}\\.webp`));
     });
+    assert.match(assetManifestSource, /race_route_backdrop\.webp\?h=[a-f0-9]{12}/);
+    assert.match(read("dbz-v6-overrides.css"), /race_route_backdrop\.webp/);
     assert.match(game, /DBZ_V6_ASSETS/);
     assert.doesNotMatch(assetManifestSource, /optional_review|partners_review|client_email_files|_source\.png|contact_sheet/i);
     assert.match(read("dbz-v6-enhancements.js"), /abilityFamilies|v6-state-fx|v6SagaVisual|v6GoalSearch/);
@@ -71,7 +80,8 @@ test("v6 art uses hashed runtime assets and a coherent race portrait set", () =>
 test("three-year balance and race-equivalent routes are in runtime code", () => {
     assert.match(game, /basePowerTargetForWeek/);
     assert.match(game, /getRaceRoutePowerMultiplier/);
-    assert.match(game, /Android Evolution State/);
-    assert.match(game, /Majin Absorption State/);
+    assert.match(game, /DBZ_V6_PROGRESSION\.getRacePowerState/);
+    assert.match(read("dbz-v6-progression-config.js"), /android_infinite|android_bio|Majin Body Evolution/);
+    assert.doesNotMatch(game, /targetState \* Math\.min/);
     assert.match(game, /authoritativeV6State/);
 });

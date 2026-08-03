@@ -1,89 +1,70 @@
 # Dragon Ball Fitness RPG v6
 
-Version: v6.0
-Build: 6.0.0-20260724.10
-Save schema: 31
+Version: v6.3
+Build: 6.3.0-20260803.1
+Save schema: 32
 Canonical entry: `DragonBall_Fitness_RPG_v6.0.html`
 
-## What v6 is
+## What v6.3 delivers
 
-v6 is the canonical, maintainable successor to the preserved 51 MB v5 release. It keeps the large fitness-RPG feature set while changing the campaign target to three years, making the interface mobile-first, replacing fragile persistence, and separating code and images from the HTML.
+v6.3 is the canonical, maintainable successor to the preserved 51 MB v5 game. It retains the full fitness RPG while making the three-year campaign a tested contract for every playable route. Base Fitness PL grows from real training; one visible primary transformation or fixed race-equivalent tier supplies story power. Echo states improve training only and never inflate story PL.
 
-Open `DragonBall_Fitness_RPG_v6.0.html` through a local HTTP server. From this directory:
+The optimal built-in Tim-plan profile reaches the finale at week 156 on all eight route variants. The deterministic sensible and casual profiles finish at weeks 200 and 279 respectively. Ignoring RPG development intentionally stalls rather than receiving a hidden target-following multiplier.
+
+Run locally with:
 
 ```powershell
 python -m http.server 8765
 ```
 
-Then visit `http://127.0.0.1:8765/DragonBall_Fitness_RPG_v6.0.html`.
+Then open `http://127.0.0.1:8765/DragonBall_Fitness_RPG_v6.0.html`.
 
 ## Canonical source map
 
-- `DragonBall_Fitness_RPG_v6.0.html` — release entry and semantic page structure.
-- `dbz-v6.js` — generated main game runtime.
-- `dbz-v6-config.js` — hand-edited version, campaign, formula, recovery and input-limit configuration.
-- `v6-asset-manifest.js` — generated SHA-256 content-hashed image manifest.
-- `dbz-v6-storage.js` — IndexedDB saves, snapshots, fallback and import validation.
-- `dbz-v6-enhancements.js` — Today view, readiness, mobile navigation, search, accessibility and safety helpers.
-- `dbz-v6.css` — generated legacy/base styles.
-- `dbz-v6-overrides.css` — hand-edited responsive v6 layer.
-- `analysis/build_v6_from_mobile.mjs` — reproducible migration/build step. It reads the later Mobile v5 source and emits the HTML, base CSS and main runtime without embedded assets.
-- `analysis/v6_balance_model.mjs` — deterministic progression acceptance model.
-- `tests/*.test.mjs` — release tests.
+- `DragonBall_Fitness_RPG_v6.0.html` - generated release entry.
+- `dbz-v6-config.js` - global campaign, formula, recovery and input configuration.
+- `dbz-v6-progression-config.js` - canonical saga bands, race routes, permissions and unlock phases.
+- `dbz-v6-progression-core.js` - shared deterministic progression, power, migration and absorption engine.
+- `dbz-v6-race-ui.js` - Race Path, choice, breakthrough and core/template UI integration.
+- `dbz-v6-storage.js` - IndexedDB saves, snapshots, fallback and schema validation.
+- `dbz-v6-enhancements.js` - Today view, readiness, mobile navigation and safety helpers.
+- `dbz-v6.css` and `dbz-v6.js` - generated base styles and legacy-compatible runtime.
+- `dbz-v6-overrides.css` - maintained responsive v6 presentation layer.
+- `analysis/build_v6_from_mobile.mjs` - reproducible generator and progression hook installer.
+- `analysis/v6_tim_plan_fixture.mjs` - shared deterministic Tim-plan fixture.
+- `analysis/v6_race_simulator.mjs` - real-config weekly parity simulator.
+- `tests/*.test.mjs` - release integrity, balance, persistence and build tests.
 
-Do not edit the generated `dbz-v6.js` or `dbz-v6.css` directly. Change the migration script, configuration, storage, enhancement or override source and run:
+Do not edit generated `dbz-v6.js` or `dbz-v6.css` directly. Change the builder or maintained modules, then run:
 
 ```powershell
 node analysis/build_v6_from_mobile.mjs
+node analysis/v6_race_simulator.mjs
 node --test tests/*.test.mjs
 ```
 
-The builder uses the legacy Mobile v5 source when that checkout still contains it. Once the Pages entry has been replaced by v6, it deterministically reads the same source from Git commit `8ac683b`. Set `DBZ_V5_MOBILE_SOURCE` to an alternate snapshot path when moving the project or rebuilding without that Git history.
+## Power and race routes
 
-The v5 HTML and old releases remain historical inputs. They are not the v6 source of truth.
+`Effective PL = linear Base Fitness PL x primary transformation or highest earned fixed race tier`
 
-## Power model
+The canonical bands are 1x, 3x, 10x, 20x, 50x, 100x, 400x, 800x, 1,000x, 2,000x, 3,500x, 10,000x, 50,000x and 80,000x. Every tier is fixed; no calculation reads the next opponent and manufactures a matching multiplier. Support quality from primary-state mastery, developed abilities, active partners and race resources determines breakthrough readiness without redefining the reward.
 
-The displayed saga-check formula is:
+Playable routes are Earthling, Saiyan, Hybrid, Namekian, Infinite Energy Android, Bio-Android, Majin and Frieza Race. Android paths are distinct: Infinite Energy uses reactor/frame mastery, while Bio-Android uses adaptation templates. Majin Absorption Cores and Bio-Android templates copy one deterministic bounded trait, have three slots, never destroy partner levels and prevent active-team double-dipping. Every route has a native finale answer; Ultra Instinct and Ultra Ego are optional explicit Divine Discipline branches.
 
-`Effective PL = linear Base Fitness PL × equipped transformation or race-equivalent state`
-
-Base Fitness PL grows from weighted raw stats without an exponential stat-to-power conversion. Partners, abilities, wishes, saga focus, training branches and state mastery improve the stats earned and the readiness of a race route. They are bounded by per-system caps and an era soft cap. They do not add a hidden direct partner multiplier to the final PL.
-
-The campaign maps saga Story XP, base-power and state requirements to weeks 0–156. Daima is between Kid Buu and Beerus. An optimal Tim-plan route targets the Granolah saga around week 156; sensible and casual routes remain viable but take longer. The complete rationale and simulation criteria are in `analysis/v6_power_scaling_spec.md`.
-
-## Race routes
-
-- Earthling: equipped Full Potential/Potential Unlocked or Kaioken, technique, abilities, partners and mastery.
-- Saiyan: equipped canonical transformations.
-- Hybrid: equipped potential/rage/Beast awakening and mastery.
-- Namekian: equipped fusion/Giant/Orange state and assimilation mastery.
-- Android/Bio-Android: equipped evolution; late eras require permanent partner absorptions.
-- Frieza Race: equipped released/evolved forms and control mastery.
-- Majin: copied techniques and permanent partner absorptions; late eras require three developed absorptions.
-
-Only the strongest available transformation or race-equivalent state is used. States do not multiply one another without a declared mechanic.
+Race selection locks after meaningful training. A different route should use another character. Cross-race discoveries remain in save history but are dormant, cannot be equipped and cannot satisfy mastery or collection progress.
 
 ## Saves and migration
 
-The main save is transactional IndexedDB data. v6 keeps the primary record plus three rolling recovery snapshots. A small localStorage pointer is used for diagnostics and a full localStorage fallback is used only if IndexedDB fails.
+Primary saves use IndexedDB with three rolling recovery snapshots and a localStorage fallback. Schema-32 migration preserves workouts, stats, completed sagas, currency, discoveries and legitimate mastery; it repairs invalid equipment, converts legacy absorption data and records an idempotent migration receipt.
 
-Schema-validated imports have a 10 MB limit, bounded depth and collection sizes, finite-number checks, date/ID checks, and a required character shape. The active save is not replaced until validation succeeds. Imported/player text is escaped at render boundaries.
+Imports are bounded to 10 MB and validated for depth, collection sizes, finite numbers, dates, IDs, route choices and three-slot core/template caps. Export before moving between devices or browsers.
 
-Legacy saves migrate deterministically to schema 31. Raw workouts and stats are preserved. The Today panel provides a v5→v6 recalculation receipt for migrated characters. Export before moving between browsers or devices.
+## Fitness safety and offline use
 
-## Sustainable fitness play
+Normal rest does not permanently erase stats. The Today view uses readiness, a 14-day no-training grace period and a flexible three-day weekly consistency target. Optional illness, injury, deload, RPE, RIR and notes are stored with workouts. This is a motivation game, not medical advice; stop or adapt for pain, illness, unsafe technique or professional guidance.
 
-Normal rest does not permanently erase stats. The dashboard uses readiness, a 14-day no-training grace period and a flexible three-day weekly consistency target. Optional readiness, illness, injury, deload, RPE, RIR and notes are stored with workouts. Implausible numeric inputs are capped with an Undo action.
-
-This is a motivation game, not medical advice. Stop or adapt training for pain, illness, unsafe technique or professional guidance.
-
-## Offline/PWA
-
-`manifest-v6.webmanifest` and `dbz-sw-v6.0.js` cache the real v6 shell, icons and featured v6 art. Navigation is network-first with an offline entry fallback; the larger image library uses stale-while-revalidate. Card artwork is resolved through the generated content-hashed manifest, which prefers WebP/AVIF over equivalent PNG/JPEG originals. The service-worker cache is versioned to build 6.0.0-20260724.10.
+`manifest-v6.webmanifest` and `dbz-sw-v6.0.js` cache the shell, icons, route UI and featured art. Navigation is network-first with an offline entry fallback; larger images use stale-while-revalidate. The service-worker cache is versioned to build 6.3.0-20260803.1.
 
 ## Visual system
 
-The v6 Today hero uses `images/v6/v6_hero.webp`, derived from `images/v6/v6_hero_source.png`. The seven character-creation portraits under `images/v6/races/` are derived from `images/v6/v6_race_avatar_sheet_source.png`. Both are original anime-inspired assets, not copies of an existing character or logo.
-
-Abilities receive a family badge and color language at render time. Transformations share reusable aura, lightning and glow layers. Saga art receives era-specific planet and environmental overlays, while non-blocking reward notifications use lightweight scouter, capsule, Dragon Ball and rank effects. All motion honors the operating-system reduced-motion preference. The complete generation prompts and modes are recorded in the changelog.
+The route panel combines the existing original v6 race portraits with code-native accessible band badges, route colours and reduced-motion effects. `images/v6/race_route_backdrop.webp` is an original shared cosmic training-route illustration generated for v6.3 and optimized to 174 KB WebP. It contains no franchise character, emblem, logo or text. The full prompt and generation mode are recorded in `CHANGELOG_v6.md`.
