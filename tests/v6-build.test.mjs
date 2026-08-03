@@ -96,9 +96,14 @@ test("release metadata stays synchronized across the generated shell and PWA", (
     const serviceWorkerBuild = serviceWorker.match(/const BUILD_ID = '([^']+)'/)?.[1];
     const releaseVersion = read("dbz-v6-config.js").match(/version:\s*'([^']+)'/)?.[1];
     const manifest = JSON.parse(read("manifest-v6.webmanifest"));
+    const escapedBuildId = buildId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     assert.ok(buildId);
     assert.equal(serviceWorkerBuild, buildId);
     assert.equal(manifest.name, `Dragon Ball Fitness RPG ${releaseVersion}`);
+    assert.match(html, new RegExp(`serviceWorker\\.register\\('./dbz-sw-v6\\.0\\.js\\?v=${escapedBuildId}[^)]*updateViaCache`));
+    assert.match(html, /controllerchange[\s\S]{0,120}location\.reload\(\)/);
+    assert.match(game, new RegExp(`serviceWorker\\.register\\('./dbz-sw-v6\\.0\\.js\\?v=${escapedBuildId}[^)]*updateViaCache`));
+    assert.ok(html.indexOf("serviceWorker.register('./dbz-sw-v6.0.js") < html.indexOf('dbz-v6-config.js'), "worker bootstrap must precede cached runtime assets");
 });
 
 test("v6 art uses hashed runtime assets and a coherent race portrait set", () => {

@@ -8,7 +8,7 @@ const ANALYSIS_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const DESTINATION = path.resolve(ANALYSIS_DIRECTORY, "..");
 const RELEASE_VERSION = "v6.4";
 const SAVE_SCHEMA_VERSION = 33;
-const BUILD_ID = "6.4.0-20260803.5";
+const BUILD_ID = "6.4.0-20260803.6";
 const LEGACY_SOURCE_COMMIT = "8ac683b";
 const repositoryCandidates = [
   path.resolve(DESTINATION, "..", "..", "DragonBall-Fitness-RPG-Mobile"),
@@ -1131,6 +1131,24 @@ javascript = replaceRequired(
   "                const newEntries = Object.values(activeChar?.storyLog?.entries || {}).filter(entry => entry?.unlocked).length - beforeStoryCount;",
   "compact story notification result"
 );
+javascript = replaceRequired(
+  javascript,
+  "navigator.serviceWorker.register('./dbz-sw-v6.0.js')",
+  `navigator.serviceWorker.register('./dbz-sw-v6.0.js?v=${BUILD_ID}', { updateViaCache: 'none' })`,
+  "versioned service-worker registration"
+);
+
+const serviceWorkerBootstrap = `    <script>
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            const hadController = Boolean(navigator.serviceWorker.controller);
+            if (hadController) {
+                navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+            }
+            navigator.serviceWorker.register('./dbz-sw-v6.0.js?v=${BUILD_ID}', { updateViaCache: 'none' })
+                .then(registration => registration.update())
+                .catch(() => {});
+        }
+    </script>`;
 
 let html = source
   .replace('<meta name="viewport" content="width=880, viewport-fit=cover">', '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">')
@@ -1143,7 +1161,8 @@ let html = source
   .replace(styleMatch[0], `    <link rel="stylesheet" href="dbz-v6.css?v=${BUILD_ID}">\n    <link rel="stylesheet" href="dbz-v6-overrides.css?v=${BUILD_ID}">\n    <link rel="stylesheet" href="dbz-v6-story.css?v=${BUILD_ID}">`)
   .replace(
     scriptMatch[0],
-    `    <script src="dbz-v6-config.js?v=${BUILD_ID}"></script>\n` +
+    `${serviceWorkerBootstrap}\n` +
+      `    <script src="dbz-v6-config.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="dbz-v6-progression-config.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="dbz-v6-progression-core.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="dbz-v6-story-db.js?v=${BUILD_ID}"></script>\n` +
