@@ -14000,7 +14000,7 @@
             updateOnlineStatus();
 
             if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-                navigator.serviceWorker.register('./dbz-sw-v6.0.js?v=6.4.0-20260803.6', { updateViaCache: 'none' })
+                navigator.serviceWorker.register('./dbz-sw-v6.0.js?v=6.4.0-20260803.7', { updateViaCache: 'none' })
                     .then(() => updateOnlineStatus())
                     .catch(err => {
                         console.warn('Service worker registration failed:', err);

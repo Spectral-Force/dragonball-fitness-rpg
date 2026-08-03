@@ -8,7 +8,7 @@ const ANALYSIS_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const DESTINATION = path.resolve(ANALYSIS_DIRECTORY, "..");
 const RELEASE_VERSION = "v6.4";
 const SAVE_SCHEMA_VERSION = 33;
-const BUILD_ID = "6.4.0-20260803.6";
+const BUILD_ID = "6.4.0-20260803.7";
 const LEGACY_SOURCE_COMMIT = "8ac683b";
 const repositoryCandidates = [
   path.resolve(DESTINATION, "..", "..", "DragonBall-Fitness-RPG-Mobile"),

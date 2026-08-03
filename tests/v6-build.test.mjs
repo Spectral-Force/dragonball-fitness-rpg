@@ -78,6 +78,10 @@ test("PWA shell references real v6 files", () => {
     });
     assert.doesNotMatch(serviceWorker, /DragonBall\.svg|index\.html/);
     assert.match(serviceWorker, /caches\.match\(request, \{ ignoreSearch: true \}\)/);
+    assert.match(serviceWorker, /shellAssetNetworkFirst/);
+    assert.match(serviceWorker, /fetch\(request, \{ cache: 'no-store' \}\)/);
+    assert.match(serviceWorker, /canonicalUrl\.search = ''/);
+    assert.match(serviceWorker, /\(\?:css\|js\|webmanifest\)[\s\S]{0,120}shellAssetNetworkFirst\(request\)/);
 });
 
 test("every versioned local stylesheet and script has an offline shell cache key", () => {

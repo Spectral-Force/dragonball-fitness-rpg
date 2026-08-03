@@ -2,7 +2,7 @@
 
 importScripts('./v6-asset-manifest.js');
 
-const BUILD_ID = '6.4.0-20260803.6';
+const BUILD_ID = '6.4.0-20260803.7';
 const VERSION = `v${BUILD_ID}`;
 const SHELL_CACHE = `dbz-fitness-shell-${VERSION}`;
 const ASSET_CACHE = `dbz-fitness-assets-${VERSION}`;
@@ -82,6 +82,24 @@ async function staleWhileRevalidate(request) {
     return cached || (await network) || Response.error();
 }
 
+async function shellAssetNetworkFirst(request) {
+    try {
+        const response = await fetch(request, { cache: 'no-store' });
+        if (response.ok) {
+            const cache = await caches.open(SHELL_CACHE);
+            const canonicalUrl = new URL(request.url);
+            canonicalUrl.search = '';
+            await Promise.all([
+                cache.put(request, response.clone()),
+                cache.put(canonicalUrl.toString(), response.clone())
+            ]);
+        }
+        return response;
+    } catch {
+        return (await caches.match(request, { ignoreSearch: true })) || Response.error();
+    }
+}
+
 self.addEventListener('fetch', event => {
     const request = event.request;
     if (request.method !== 'GET') return;
@@ -95,6 +113,11 @@ self.addEventListener('fetch', event => {
 
     if (/\.(?:avif|gif|jpe?g|png|webp)$/i.test(url.pathname)) {
         event.respondWith(staleWhileRevalidate(request));
+        return;
+    }
+
+    if (/\.(?:css|js|webmanifest)$/i.test(url.pathname)) {
+        event.respondWith(shellAssetNetworkFirst(request));
         return;
     }
 
