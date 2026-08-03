@@ -2,7 +2,8 @@
 
 importScripts('./v6-asset-manifest.js');
 
-const VERSION = 'v6.3.0-20260803.1';
+const BUILD_ID = '6.4.0-20260803.5';
+const VERSION = `v${BUILD_ID}`;
 const SHELL_CACHE = `dbz-fitness-shell-${VERSION}`;
 const ASSET_CACHE = `dbz-fitness-assets-${VERSION}`;
 const ENTRY = './DragonBall_Fitness_RPG_v6.0.html';
@@ -12,14 +13,21 @@ const APP_SHELL = [
     './manifest-v6.webmanifest',
     './dbz-v6.css',
     './dbz-v6-overrides.css',
+    './dbz-v6-story.css',
     './dbz-v6-config.js',
     './dbz-v6-progression-config.js',
     './dbz-v6-progression-core.js',
+    './dbz-v6-story-db.js',
+    './dbz-v6-story-dbz.js',
+    './dbz-v6-story-super.js',
+    './dbz-v6-story-characters.js',
+    './dbz-v6-story-core.js',
     './v6-asset-manifest.js',
     './dbz-v6-storage.js',
     './dbz-v6.js',
     './dbz-v6-enhancements.js',
     './dbz-v6-race-ui.js',
+    './dbz-v6-story-ui.js',
     './icons/icon-192.png',
     './icons/icon-512.png',
     './icons/apple-touch-icon.png',
@@ -91,7 +99,7 @@ self.addEventListener('fetch', event => {
     }
 
     event.respondWith(
-        caches.match(request).then(cached => cached || fetch(request).then(response => {
+        caches.match(request, { ignoreSearch: true }).then(cached => cached || fetch(request).then(response => {
             if (response.ok) {
                 const copy = response.clone();
                 caches.open(SHELL_CACHE).then(cache => cache.put(request, copy));

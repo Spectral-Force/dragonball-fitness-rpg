@@ -172,8 +172,8 @@
     }
 
     root.DBZ_V6_CONFIG = Object.freeze({
-        version: 'v6.3',
-        schemaVersion: 32,
+        version: 'v6.4',
+        schemaVersion: 33,
         campaignWeeks: 156,
         campaignYears: 3,
         expectedGoodRouteWeeks: Object.freeze([180, 210]),

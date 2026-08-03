@@ -1,13 +1,17 @@
 # Dragon Ball Fitness RPG v6
 
-Version: v6.3
-Build: 6.3.0-20260803.1
-Save schema: 32
+Version: v6.4
+Build: 6.4.0-20260803.5
+Save schema: 33
 Canonical entry: `DragonBall_Fitness_RPG_v6.0.html`
 
-## What v6.3 delivers
+## What v6.4 delivers
 
-v6.3 is the canonical, maintainable successor to the preserved 51 MB v5 game. It retains the full fitness RPG while making the three-year campaign a tested contract for every playable route. Base Fitness PL grows from real training; one visible primary transformation or fixed race-equivalent tier supplies story power. Echo states improve training only and never inflate story PL.
+v6.4 turns the complete three-year progression campaign into an authored story experience. All 38 sagas now have original, unlockable chapters: 278 saga beats in total, plus 100 beats across 20 core character arcs and 40 game-original relationship scenes. Canon-core, anime-only, Daima, Super anime and Super manga continuity are labelled explicitly.
+
+Story unlocks now obey the exact saga state. Entry beats require the saga to be unlocked, development and turning-point beats use bounded Focus progress, resolutions require an actual clear, and mastery epilogues require mastery. The dashboard never substitutes an unrelated saga's latest entry. Partner milestone prose lives in a separate Training Journal so it no longer overwhelms the Story Codex.
+
+The v6.3 race and power contract remains intact: Base Fitness PL grows from real training; one visible primary transformation or fixed race-equivalent tier supplies story power. Echo states improve training only and never inflate story PL.
 
 The optimal built-in Tim-plan profile reaches the finale at week 156 on all eight route variants. The deterministic sensible and casual profiles finish at weeks 200 and 279 respectively. Ignoring RPG development intentionally stalls rather than receiving a hidden target-following multiplier.
 
@@ -26,6 +30,8 @@ Then open `http://127.0.0.1:8765/DragonBall_Fitness_RPG_v6.0.html`.
 - `dbz-v6-progression-config.js` - canonical saga bands, race routes, permissions and unlock phases.
 - `dbz-v6-progression-core.js` - shared deterministic progression, power, migration and absorption engine.
 - `dbz-v6-race-ui.js` - Race Path, choice, breakthrough and core/template UI integration.
+- `dbz-v6-story-*.js` - authored story data, deterministic unlock engine, migration and Story Codex UI.
+- `dbz-v6-story.css` - responsive story, character, relationship and Training Journal presentation.
 - `dbz-v6-storage.js` - IndexedDB saves, snapshots, fallback and schema validation.
 - `dbz-v6-enhancements.js` - Today view, readiness, mobile navigation and safety helpers.
 - `dbz-v6.css` and `dbz-v6.js` - generated base styles and legacy-compatible runtime.
@@ -55,7 +61,7 @@ Race selection locks after meaningful training. A different route should use ano
 
 ## Saves and migration
 
-Primary saves use IndexedDB with three rolling recovery snapshots and a localStorage fallback. Schema-32 migration preserves workouts, stats, completed sagas, currency, discoveries and legitimate mastery; it repairs invalid equipment, converts legacy absorption data and records an idempotent migration receipt.
+Primary saves use IndexedDB with three rolling recovery snapshots and a localStorage fallback. Schema-33 migration preserves workouts, stats, completed sagas, currency, discoveries and legitimate mastery; it also compacts old duplicated story prose into ID/timestamp/read receipts and moves partner milestones into the Training Journal. Migration remains idempotent and does not grant unearned resolution or mastery chapters.
 
 Imports are bounded to 10 MB and validated for depth, collection sizes, finite numbers, dates, IDs, route choices and three-slot core/template caps. Export before moving between devices or browsers.
 
@@ -63,7 +69,7 @@ Imports are bounded to 10 MB and validated for depth, collection sizes, finite n
 
 Normal rest does not permanently erase stats. The Today view uses readiness, a 14-day no-training grace period and a flexible three-day weekly consistency target. Optional illness, injury, deload, RPE, RIR and notes are stored with workouts. This is a motivation game, not medical advice; stop or adapt for pain, illness, unsafe technique or professional guidance.
 
-`manifest-v6.webmanifest` and `dbz-sw-v6.0.js` cache the shell, icons, route UI and featured art. Navigation is network-first with an offline entry fallback; larger images use stale-while-revalidate. The service-worker cache is versioned to build 6.3.0-20260803.1.
+`manifest-v6.webmanifest` and `dbz-sw-v6.0.js` cache the shell, story libraries, icons, route UI and featured art. Navigation is network-first with an offline entry fallback; larger images use stale-while-revalidate. Versioned browser requests resolve against the unversioned shell cache for reliable cold-offline startup. The service-worker cache is versioned to build 6.4.0-20260803.5.
 
 ## Visual system
 

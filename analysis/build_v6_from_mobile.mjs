@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 
 const ANALYSIS_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const DESTINATION = path.resolve(ANALYSIS_DIRECTORY, "..");
-const BUILD_ID = "6.3.0-20260803.1";
+const RELEASE_VERSION = "v6.4";
+const SAVE_SCHEMA_VERSION = 33;
+const BUILD_ID = "6.4.0-20260803.5";
 const LEGACY_SOURCE_COMMIT = "8ac683b";
 const repositoryCandidates = [
   path.resolve(DESTINATION, "..", "..", "DragonBall-Fitness-RPG-Mobile"),
@@ -18,6 +20,23 @@ const MOBILE_REPOSITORY = repositoryCandidates.find(candidate =>
 const SOURCE = process.env.DBZ_V5_MOBILE_SOURCE
   ? path.resolve(process.env.DBZ_V5_MOBILE_SOURCE)
   : path.join(MOBILE_REPOSITORY || repositoryCandidates[0], "index.html");
+
+function validateReleaseMetadata() {
+  const configSource = fs.readFileSync(path.join(DESTINATION, "dbz-v6-config.js"), "utf8");
+  const serviceWorkerSource = fs.readFileSync(path.join(DESTINATION, "dbz-sw-v6.0.js"), "utf8");
+  const manifest = JSON.parse(fs.readFileSync(path.join(DESTINATION, "manifest-v6.webmanifest"), "utf8"));
+  const configVersion = configSource.match(/version:\s*'([^']+)'/)?.[1];
+  const configSchema = Number(configSource.match(/schemaVersion:\s*(\d+)/)?.[1]);
+  const serviceWorkerBuild = serviceWorkerSource.match(/const BUILD_ID = '([^']+)'/)?.[1];
+  const failures = [];
+  if (configVersion !== RELEASE_VERSION) failures.push(`config version ${configVersion || 'missing'} != ${RELEASE_VERSION}`);
+  if (configSchema !== SAVE_SCHEMA_VERSION) failures.push(`config schema ${configSchema || 'missing'} != ${SAVE_SCHEMA_VERSION}`);
+  if (serviceWorkerBuild !== BUILD_ID) failures.push(`service-worker build ${serviceWorkerBuild || 'missing'} != ${BUILD_ID}`);
+  if (manifest.name !== `Dragon Ball Fitness RPG ${RELEASE_VERSION}`) failures.push(`manifest name ${manifest.name || 'missing'} is stale`);
+  if (failures.length) throw new Error(`Release metadata mismatch: ${failures.join('; ')}`);
+}
+
+validateReleaseMetadata();
 
 function readLegacySource() {
   if (fs.existsSync(SOURCE)) {
@@ -246,7 +265,10 @@ javascript = replaceRequired(
             try {
                 const defaults = JSON.parse(JSON.stringify(state));
                 const loadedSchema = Number(loaded.schemaVersion) || 1;
-                if (loadedSchema < SAVE_SCHEMA_VERSION) backupLegacySave(JSON.stringify(loaded));
+                if (loadedSchema < SAVE_SCHEMA_VERSION) {
+                    await window.DBZV6Storage.preservePreMigrationSnapshot(loaded, SAVE_SCHEMA_VERSION);
+                    backupLegacySave(JSON.stringify(loaded));
+                }
                 const mergedState = { ...defaults, ...loaded };
                 Object.keys(state).forEach(key => delete state[key]);
                 Object.assign(state, mergedState);
@@ -888,6 +910,23 @@ javascript = replaceRequired(
 );
 javascript = replaceRequired(
   javascript,
+  "            if (fromSchema < 25) {",
+  `            if (fromSchema < 33 && window.DBZ_V6_STORY_UI) {
+                const storyMigration = window.DBZ_V6_STORY_UI.syncStoryUnlocks(c);
+                c.v64StoryMigration = {
+                    sourceSchema: fromSchema,
+                    targetSchema: SAVE_SCHEMA_VERSION,
+                    migratedAt: new Date().toISOString(),
+                    compactLog: true,
+                    partnerJournalSeparated: true,
+                    newlyUnlockedCount: storyMigration.newlyUnlocked.length
+                };
+            }
+            if (fromSchema < 25) {`,
+  "schema 33 story migration"
+);
+javascript = replaceRequired(
+  javascript,
   "            const notes = '';",
   "            const notes = String(state.v6WorkoutContext?.notes || '').slice(0, 500);",
   "workout context notes"
@@ -914,6 +953,185 @@ javascript = replaceRequired(
   "workout context reset"
 );
 
+// v6.4 replaces the legacy three-pack/fallback story layer with authored,
+// data-driven chapters and compact save receipts.
+javascript = replaceRequired(
+  javascript,
+  /function v5RenderSagaStoryLog\(char, saga\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function v5SagaStoryArchiveEntries/,
+  `function v5RenderSagaStoryLog(char, saga) {
+                return window.DBZ_V6_STORY_UI?.renderSagaStoryLog(char, saga)
+                    || '<div class="v5-mini-note">Story module unavailable.</div>';
+            }
+
+            function v5SagaStoryArchiveEntries`,
+  "v6.4 saga story renderer"
+);
+javascript = replaceRequired(
+  javascript,
+  /function v5RenderCompleteSagaStoryArchive\(char\) \{[\s\S]*?\r?\n\s*\}\r?\n\s*window\.v5RenderCompleteSagaStoryArchive/,
+  `function v5RenderCompleteSagaStoryArchive(char) {
+                return window.DBZ_V6_STORY_UI?.renderCompleteSagaStoryArchive(char, SAGAS)
+                    || '<div class="v5-mini-note">Story archive unavailable.</div>';
+            }
+            window.v5RenderCompleteSagaStoryArchive`,
+  "v6.4 complete story archive"
+);
+javascript = replaceRequired(
+  javascript,
+  /function v5SagaStoryArchiveEntries\(saga\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function v5RenderCompleteSagaStoryArchive/,
+  `function v5SagaStoryArchiveEntries(saga) {
+                return window.DBZ_V6_STORY_DATA?.sagas?.[saga.id]?.entries || [];
+            }
+
+            function v5RenderCompleteSagaStoryArchive`,
+  "remove generic saga story fallbacks"
+);
+javascript = replaceRequired(
+  javascript,
+  /SAGA_STORY_PACKS = \{[\s\S]*?\r?\n\s*window\.PARTNER_MILESTONES = PARTNER_MILESTONES;/,
+  `SAGA_STORY_PACKS = window.DBZ_V6_STORY_DATA?.sagas || {};
+            CHARACTER_STORY_BEATS = window.DBZ_V6_STORY_DATA?.characters || {};
+            GLOBAL_STORY_EVENTS = [];
+
+            window.PARTNER_MILESTONES = PARTNER_MILESTONES;`,
+  "replace legacy story prose datasets"
+);
+javascript = replaceRequired(
+  javascript,
+  /function ensureStoryLog\(char\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function unlockStoryEntry\(char, entry\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function hasUnlockedStoryEntry\(char, id\) \{[\s\S]*?\r?\n\s*\}/,
+  `function ensureStoryLog(char) {
+                return window.DBZ_V6_STORY_UI?.ensureStoryLog(char).log || char?.storyLog || {};
+            }
+
+            function unlockStoryEntry() {
+                // Authored content is resolved by ID; generated prose is never written to saves.
+                return false;
+            }
+
+            function hasUnlockedStoryEntry(char, id) {
+                return char?.storyLog?.entries?.[id]?.unlocked === true;
+            }`,
+  "compact story log compatibility"
+);
+javascript = replaceRequired(
+  javascript,
+  /function updateAllStoryUnlocks\(char\) \{[\s\S]*?\r?\n\s*return newly;\r?\n\s*\}/,
+  `function updateAllStoryUnlocks(char) {
+                if (!char) return [];
+                const result = window.DBZ_V6_STORY_UI?.syncStoryUnlocks(char);
+                return result?.newlyUnlocked || [];
+            }`,
+  "v6.4 story unlock synchronizer"
+);
+javascript = replaceRequired(
+  javascript,
+  /function updateSagaStoryUnlocks\(char, sagaId\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function updateCharacterStoryUnlocks/,
+  `function updateSagaStoryUnlocks(char, sagaId) {
+                const result = window.DBZ_V6_STORY_UI?.syncStoryUnlocks(char);
+                return (result?.newlyUnlocked || []).filter(id => window.DBZ_V6_STORY_UI?.findSagaEntry(id)?.sagaId === sagaId);
+            }
+
+            function updateCharacterStoryUnlocks`,
+  "exact saga unlock compatibility"
+);
+javascript = replaceRequired(
+  javascript,
+  /function updateCharacterStoryUnlocks\(char, partnerId\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function updateGlobalStoryUnlocks/,
+  `function updateCharacterStoryUnlocks(char, partnerId) {
+                const result = window.DBZ_V6_STORY_UI?.syncStoryUnlocks(char);
+                const ids = new Set((window.DBZ_V6_STORY_DATA?.characters?.[partnerId]?.beats || []).map(beat => beat.id));
+                return (result?.newlyUnlocked || []).filter(id => ids.has(id));
+            }
+
+            function updateGlobalStoryUnlocks`,
+  "authored character unlock compatibility"
+);
+javascript = replaceRequired(
+  javascript,
+  /function updateGlobalStoryUnlocks\(char\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function updateAllStoryUnlocks/,
+  `function updateGlobalStoryUnlocks() {
+                return [];
+            }
+
+            function updateAllStoryUnlocks`,
+  "remove generated global story entries"
+);
+javascript = replaceRequired(
+  javascript,
+  /unlockStoryEntry\(char, \{\r?\n\s*id: `\$\{partnerId\}_milestone_story_\$\{milestone\.level\}`,\r?\n\s*title: milestone\.name,\r?\n\s*text: milestone\.story,\r?\n\s*type: 'milestone',\r?\n\s*source: partner\?\.name \|\| partnerId,\r?\n\s*tags: \[partnerId, \.\.\.\(milestone\.tags \|\| \[\]\)\]\r?\n\s*\}\);/,
+  "window.DBZ_V6_STORY_UI?.recordPartnerMilestone(char, partnerId, milestone);",
+  "separate partner Training Journal"
+);
+javascript = replaceRequired(
+  javascript,
+  /function renderStoryCodex\(filter = 'current'\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function markStoryEntryRead/,
+  `function renderStoryCodex(filter = 'current') {
+                const char = getActiveCharacter();
+                return window.DBZ_V6_STORY_UI?.renderCodex(char, filter, SAGAS);
+            }
+
+            function markStoryEntryRead`,
+  "v6.4 Story Codex renderer"
+);
+javascript = replaceRequired(
+  javascript,
+  /function markStoryEntryRead\(id\) \{[\s\S]*?\r?\n\s*\}\r?\n\r?\n\s*function installStoryCodexTab/,
+  `function markStoryEntryRead(id) {
+                const char = getActiveCharacter();
+                if (!window.DBZ_V6_STORY_UI?.markStoryEntryRead(char, id)) return;
+                saveState();
+                renderStoryCodex();
+                if (typeof renderSagas === 'function') renderSagas();
+            }
+
+            function installStoryCodexTab`,
+  "v6.4 story read receipts"
+);
+javascript = replaceRequired(
+  javascript,
+  "            else if (tabId === 'history')         renderHistoryTab();",
+  `            else if (tabId === 'history')         renderHistoryTab();
+            else if (tabId === 'story')           window.renderStoryCodex?.();`,
+  "Story Codex central tab router"
+);
+javascript = replaceRequired(
+  javascript,
+  `function installStoryCodexTab() {
+                const nav = document.querySelector('.tab-nav');`,
+  `function installStoryCodexTab() {
+                const nav = document.querySelector('.tabbar-left') || document.querySelector('.tab-nav');`,
+  "Story Codex top navigation host"
+);
+javascript = replaceRequired(
+  javascript,
+  `                    const before = document.querySelector('[data-tab="achievements"]');
+                    nav.insertBefore(btn, before || null);`,
+  `                    const before = nav.querySelector('[data-tab="character"]');
+                    nav.insertBefore(btn, before || null);`,
+  "Story Codex navigation position"
+);
+javascript = replaceRequired(
+  javascript,
+  /function dbzLatestStoryForSaga\(char, saga\) \{[\s\S]*?\r?\n\s*\}/,
+  `function dbzLatestStoryForSaga(char, saga) {
+            return window.DBZ_V6_STORY_UI?.latestSagaText(char, saga)
+                || (saga?.name || 'This saga') + ' has not revealed a chapter yet.';
+        }`,
+  "exact-saga dashboard story"
+);
+javascript = replaceRequired(
+  javascript,
+  "                const beforeStoryCount = Object.keys(char?.storyLog?.unlockedEntries || {}).length;",
+  "                const beforeStoryCount = Object.values(char?.storyLog?.entries || {}).filter(entry => entry?.unlocked).length;",
+  "compact story notification baseline"
+);
+javascript = replaceRequired(
+  javascript,
+  "                const newEntries = Object.values(activeChar?.storyLog?.unlockedEntries || {}).length - beforeStoryCount;",
+  "                const newEntries = Object.values(activeChar?.storyLog?.entries || {}).filter(entry => entry?.unlocked).length - beforeStoryCount;",
+  "compact story notification result"
+);
+
 let html = source
   .replace('<meta name="viewport" content="width=880, viewport-fit=cover">', '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">')
   .replace("<title>Dragon Ball Fitness RPG Tracker</title>", "<title>Dragon Ball Fitness RPG v6</title>")
@@ -922,20 +1140,32 @@ let html = source
   .replace('href="manifest.webmanifest"', 'href="manifest-v6.webmanifest"')
   .replace("<head>", `<head>\n    <meta name="dbz-build" content="${BUILD_ID}">`)
   .replace('<h1 class="game-title">Dragon Ball Fitness RPG</h1>', `<h1 class="game-title">Dragon Ball Fitness RPG <span class="v6-build-badge">v6.3 · ${BUILD_ID}</span></h1>`)
-  .replace(styleMatch[0], `    <link rel="stylesheet" href="dbz-v6.css?v=${BUILD_ID}">\n    <link rel="stylesheet" href="dbz-v6-overrides.css?v=${BUILD_ID}">`)
+  .replace(styleMatch[0], `    <link rel="stylesheet" href="dbz-v6.css?v=${BUILD_ID}">\n    <link rel="stylesheet" href="dbz-v6-overrides.css?v=${BUILD_ID}">\n    <link rel="stylesheet" href="dbz-v6-story.css?v=${BUILD_ID}">`)
   .replace(
     scriptMatch[0],
     `    <script src="dbz-v6-config.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="dbz-v6-progression-config.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="dbz-v6-progression-core.js?v=${BUILD_ID}"></script>\n` +
+      `    <script src="dbz-v6-story-db.js?v=${BUILD_ID}"></script>\n` +
+      `    <script src="dbz-v6-story-dbz.js?v=${BUILD_ID}"></script>\n` +
+      `    <script src="dbz-v6-story-super.js?v=${BUILD_ID}"></script>\n` +
+      `    <script src="dbz-v6-story-characters.js?v=${BUILD_ID}"></script>\n` +
+      `    <script src="dbz-v6-story-core.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="v6-asset-manifest.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="dbz-v6-storage.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="dbz-v6.js?v=${BUILD_ID}"></script>\n` +
       `    <script src="dbz-v6-enhancements.js?v=${BUILD_ID}"></script>\n` +
-      `    <script src="dbz-v6-race-ui.js?v=${BUILD_ID}"></script>`
+      `    <script src="dbz-v6-race-ui.js?v=${BUILD_ID}"></script>\n` +
+      `    <script src="dbz-v6-story-ui.js?v=${BUILD_ID}"></script>`
   );
 
-html = html.replaceAll("Dragon Ball Fitness RPG Tracker", "Dragon Ball Fitness RPG v6");
+html = html
+  .replaceAll("Dragon Ball Fitness RPG Tracker", "Dragon Ball Fitness RPG v6")
+  .replaceAll("v6.3 ·", `${RELEASE_VERSION} ·`);
+
+if (!html.includes(`name="dbz-build" content="${BUILD_ID}"`) || !html.includes(`${RELEASE_VERSION} · ${BUILD_ID}`)) {
+  throw new Error("Generated HTML release metadata is incomplete.");
+}
 
 const finalizeText = value => value.replace(/[ \t]+$/gm, "").trimEnd() + "\n";
 html = finalizeText(html);

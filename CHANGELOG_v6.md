@@ -1,5 +1,32 @@
 # Dragon Ball Fitness RPG v6 Changelog
 
+## v6.4 - build 6.4.0-20260803.5
+
+### Complete story campaign
+
+- Replaced three bespoke saga packs and 105 generic fallback beats with 278 authored chapters across all 38 sagas: DB 63, DBZ 126, Daima 23 and DBS 66.
+- Added 20 canon-core character arcs with five beats each and 20 game-original two-part relationship interludes using only real roster IDs.
+- Labelled canon-core, anime-only, Daima, Super anime and Super manga continuity and source scope per saga pack.
+- Added Story, Character lens and Your chapter presentation, spoiler-safe locked cards, read receipts and Current Saga, Unread, Saga Archive, Characters, Relationships, Training Journal and All filters.
+
+### Progression and save integrity
+
+- Replaced ratio-only story checks with exact saga unlock rules: entry requires unlock, development and preclimax use Focus thresholds, resolution requires clear, and mastery requires mastery.
+- Fixed the dashboard so it never borrows an unrelated saga's latest story.
+- Added schema-33 idempotent story migration with compact ID/timestamp/read receipts; duplicated prose is no longer stored in saves.
+- Preserved one immutable raw pre-schema-33 recovery snapshot before any story migration, even when an older legacy backup already exists.
+- Added a Legacy History Codex view so unmapped historical receipts remain visible and mapped character receipts retain their read state.
+- Moved generated partner milestone notes into a separate compact Training Journal while preserving partner development.
+- Added deterministic legacy mappings for the original nine bespoke entries without allowing legacy data to grant unearned resolution or mastery.
+
+### Interface, offline and QA
+
+- Added desktop Story navigation and a mobile Story Codex item in More while retaining Saga on the primary bottom bar.
+- Raised active modals above the mobile navigation so first-run setup and other modal actions remain reachable.
+- Added the story data, engine, UI and CSS to the offline application shell and advanced its cache to build 6.4.0-20260803.5.
+- Made cache lookup ignore version query strings so the versioned browser shell starts correctly from the unversioned offline cache.
+- Added schema, unlock, migration, content, roster, continuity and regression tests. Release result: 67/67 automated tests pass, 38/38 saga packs validate, 496 production narrative IDs are unique and browser QA reports no console warnings or errors.
+
 ## v6.3 - build 6.3.0-20260803.1
 
 ### Progression integrity

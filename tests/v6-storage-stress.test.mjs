@@ -69,7 +69,7 @@ test("malformed, future-schema, invalid-date and outlier imports are rejected", 
         /characters collection/
     );
     assert.throws(
-        () => globalThis.DBZV6Storage.validateImportedSave({ ...saveWith(character()), schemaVersion: 33 }),
+        () => globalThis.DBZV6Storage.validateImportedSave({ ...saveWith(character()), schemaVersion: 34 }),
         /Unsupported save schema/
     );
     assert.throws(

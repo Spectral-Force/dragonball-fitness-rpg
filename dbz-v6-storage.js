@@ -200,6 +200,28 @@
         }
     }
 
+    async function preservePreMigrationSnapshot(value, targetSchema) {
+        const sourceSchema = Math.max(1, Number(value?.schemaVersion) || 1);
+        const destinationSchema = Math.max(sourceSchema + 1, Number(targetSchema) || sourceSchema + 1);
+        const key = `pre-migration:schema-${destinationSchema}:from-${sourceSchema}`;
+        try {
+            if (await readKey(key)) return false;
+            const payload = structuredClone(value);
+            await transact('readwrite', store => store.add(payload, key));
+            return true;
+        } catch (error) {
+            console.warn('Could not preserve the IndexedDB pre-migration snapshot:', error);
+            const fallbackKey = `dbfitness_pre_schema_${destinationSchema}`;
+            try {
+                if (!localStorage.getItem(fallbackKey)) localStorage.setItem(fallbackKey, JSON.stringify(value));
+                return true;
+            } catch (fallbackError) {
+                console.warn('Could not preserve the local pre-migration snapshot:', fallbackError);
+                return false;
+            }
+        }
+    }
+
     async function clear() {
         try {
             await transact('readwrite', store => store.clear());
@@ -256,7 +278,7 @@
         if (fileSize > MAX_IMPORT_BYTES) throw new Error('The import is larger than the 10 MB safety limit.');
         if (!isPlainObject(candidate)) throw new Error('The import must be a game-save object.');
         const schema = Number(candidate.schemaVersion || 1);
-        const currentSchema = Number(root.DBZ_V6_CONFIG?.schemaVersion || 32);
+        const currentSchema = Number(root.DBZ_V6_CONFIG?.schemaVersion || 33);
         if (!Number.isInteger(schema) || schema < 1 || schema > currentSchema) {
             throw new Error(`Unsupported save schema: ${candidate.schemaVersion}.`);
         }
@@ -322,6 +344,7 @@
         hasSave,
         clear,
         finishBootstrap,
+        preservePreMigrationSnapshot,
         validateImportedSave,
         maxImportBytes: MAX_IMPORT_BYTES
     });

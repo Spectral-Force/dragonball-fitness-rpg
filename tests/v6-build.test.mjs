@@ -19,6 +19,12 @@ test("v6 is a split canonical build without embedded base64 assets", () => {
     assert.match(html, /dbz-v6-config\.js/);
     assert.match(html, /dbz-v6-progression-config\.js/);
     assert.match(html, /dbz-v6-progression-core\.js/);
+    assert.match(html, /dbz-v6-story-db\.js/);
+    assert.match(html, /dbz-v6-story-dbz\.js/);
+    assert.match(html, /dbz-v6-story-super\.js/);
+    assert.match(html, /dbz-v6-story-characters\.js/);
+    assert.match(html, /dbz-v6-story-core\.js/);
+    assert.match(html, /dbz-v6-story-ui\.js/);
     assert.match(html, /v6-asset-manifest\.js/);
     assert.match(html, /dbz-v6-storage\.js/);
     assert.match(html, /dbz-v6-enhancements\.js/);
@@ -31,6 +37,9 @@ test("mobile viewport, safe notifications and accessibility helpers are wired", 
     assert.doesNotMatch(game, /\balert\(/);
     assert.match(read("dbz-v6-enhancements.js"), /role.*dialog|setAttribute\('role', 'dialog'\)/s);
     assert.match(read("dbz-v6-overrides.css"), /prefers-reduced-motion/);
+    assert.match(game, /tabId === 'story'[\s\S]{0,80}window\.renderStoryCodex/);
+    assert.match(read("dbz-v6-enhancements.js"), /\['story', 'Story Codex'\]/);
+    assert.match(read("dbz-v6-overrides.css"), /\.modal\.active\s*\{[\s\S]*?z-index:\s*3000/);
 });
 
 test("persistence uses IndexedDB, snapshots and bounded import validation", () => {
@@ -38,6 +47,8 @@ test("persistence uses IndexedDB, snapshots and bounded import validation", () =
     assert.match(storage, /snapshot:/);
     assert.match(storage, /MAX_IMPORT_BYTES = 10 \* 1024 \* 1024/);
     assert.match(storage, /validateImportedSave/);
+    assert.match(storage, /preservePreMigrationSnapshot/);
+    assert.match(game, /await window\.DBZV6Storage\.preservePreMigrationSnapshot\(loaded, SAVE_SCHEMA_VERSION\)/);
 });
 
 test("PWA shell references real v6 files", () => {
@@ -50,6 +61,13 @@ test("PWA shell references real v6 files", () => {
         "dbz-v6-progression-config.js",
         "dbz-v6-progression-core.js",
         "dbz-v6-race-ui.js",
+        "dbz-v6-story.css",
+        "dbz-v6-story-db.js",
+        "dbz-v6-story-dbz.js",
+        "dbz-v6-story-super.js",
+        "dbz-v6-story-characters.js",
+        "dbz-v6-story-core.js",
+        "dbz-v6-story-ui.js",
         "v6-asset-manifest.js",
         "images/v6/v6_hero.webp",
         "images/v6/race_route_backdrop.webp"
@@ -59,6 +77,28 @@ test("PWA shell references real v6 files", () => {
         assert.match(serviceWorker, new RegExp(relative.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     });
     assert.doesNotMatch(serviceWorker, /DragonBall\.svg|index\.html/);
+    assert.match(serviceWorker, /caches\.match\(request, \{ ignoreSearch: true \}\)/);
+});
+
+test("every versioned local stylesheet and script has an offline shell cache key", () => {
+    const versionedAssets = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))\?v=[^"]+"/g)]
+        .map(match => match[1]);
+    assert.ok(versionedAssets.length >= 10, "expected the generated shell to use versioned assets");
+    versionedAssets.forEach(relative => {
+        const escaped = relative.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        assert.match(serviceWorker, new RegExp(`['"]\\./${escaped}['"]`), `${relative} is not in the offline shell`);
+    });
+    assert.match(serviceWorker, /caches\.match\(request, \{ ignoreSearch: true \}\)/);
+});
+
+test("release metadata stays synchronized across the generated shell and PWA", () => {
+    const buildId = html.match(/name="dbz-build" content="([^"]+)"/)?.[1];
+    const serviceWorkerBuild = serviceWorker.match(/const BUILD_ID = '([^']+)'/)?.[1];
+    const releaseVersion = read("dbz-v6-config.js").match(/version:\s*'([^']+)'/)?.[1];
+    const manifest = JSON.parse(read("manifest-v6.webmanifest"));
+    assert.ok(buildId);
+    assert.equal(serviceWorkerBuild, buildId);
+    assert.equal(manifest.name, `Dragon Ball Fitness RPG ${releaseVersion}`);
 });
 
 test("v6 art uses hashed runtime assets and a coherent race portrait set", () => {

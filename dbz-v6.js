@@ -3386,6 +3386,7 @@
             else if (tabId === 'character')       renderCharacter();
             else if (tabId === 'fitness-plan')    renderFitnessPlan();
             else if (tabId === 'history')         renderHistoryTab();
+            else if (tabId === 'story')           window.renderStoryCodex?.();
         }
 
         function switchGameTab(tabId) {
@@ -11287,6 +11288,17 @@
                     }
                 };
             }
+            if (fromSchema < 33 && window.DBZ_V6_STORY_UI) {
+                const storyMigration = window.DBZ_V6_STORY_UI.syncStoryUnlocks(c);
+                c.v64StoryMigration = {
+                    sourceSchema: fromSchema,
+                    targetSchema: SAVE_SCHEMA_VERSION,
+                    migratedAt: new Date().toISOString(),
+                    compactLog: true,
+                    partnerJournalSeparated: true,
+                    newlyUnlockedCount: storyMigration.newlyUnlocked.length
+                };
+            }
             if (fromSchema < 25) {
                 migrateAbilityInventory(c);
                 if (historyNeedsBaselineRepair(c)) {
@@ -11305,7 +11317,10 @@
             try {
                 const defaults = JSON.parse(JSON.stringify(state));
                 const loadedSchema = Number(loaded.schemaVersion) || 1;
-                if (loadedSchema < SAVE_SCHEMA_VERSION) backupLegacySave(JSON.stringify(loaded));
+                if (loadedSchema < SAVE_SCHEMA_VERSION) {
+                    await window.DBZV6Storage.preservePreMigrationSnapshot(loaded, SAVE_SCHEMA_VERSION);
+                    backupLegacySave(JSON.stringify(loaded));
+                }
                 const mergedState = { ...defaults, ...loaded };
                 Object.keys(state).forEach(key => delete state[key]);
                 Object.assign(state, mergedState);
@@ -20353,60 +20368,17 @@ function getAbilityArt(abilityId) {
             }
 
             function v5RenderSagaStoryLog(char, saga) {
-                const pack = typeof SAGA_STORY_PACKS !== 'undefined' ? SAGA_STORY_PACKS[saga.id] : null;
-                const ratio = typeof getSagaFocusProgressRatio === 'function' ? getSagaFocusProgressRatio(char, saga.id) : 0;
-                const entries = pack?.entries?.length ? pack.entries : [
-                    { id: `${saga.id}_fallback_start`, triggerProgress: 0, title: `${saga.name} Begins`, summary: [dbzThreeSentences(saga.desc, saga)] },
-                    { id: `${saga.id}_fallback_focus`, triggerProgress: 0.5, title: `${saga.name} Pressure`, summary: [`Training focus turns ${saga.name} from a locked target into an earned benchmark.`] },
-                    { id: `${saga.id}_fallback_clear`, triggerProgress: 1, title: `${saga.name} Cleared`, summary: [`Clearing ${saga.name} should open the next meaningful tier of the campaign.`] }
-                ];
-                return entries.map(entry => {
-                    const unlocked = typeof hasUnlockedStoryEntry === 'function' ? hasUnlockedStoryEntry(char, entry.id) : ratio >= v5_num(entry.triggerProgress);
-                    const open = unlocked || ratio >= v5_num(entry.triggerProgress);
-                    const summary = Array.isArray(entry.summary) ? entry.summary.join(' ') : String(entry.summary || '');
-                    return `<div class="v5-saga-story-entry ${open ? 'open' : 'locked'}">
-                        <div class="v5-kicker">${open ? 'Unlocked' : `At ${Math.round(v5_num(entry.triggerProgress) * 100)}% focus`}</div>
-                        <h4>${v5_escape(entry.title)}</h4>
-                        <p>${open ? v5_escape(dbzThreeSentences(summary, saga)) : 'Keep training this saga focus to reveal this story beat.'}</p>
-                    </div>`;
-                }).join('');
+                return window.DBZ_V6_STORY_UI?.renderSagaStoryLog(char, saga)
+                    || '<div class="v5-mini-note">Story module unavailable.</div>';
             }
 
             function v5SagaStoryArchiveEntries(saga) {
-                const pack = typeof SAGA_STORY_PACKS !== 'undefined' ? SAGA_STORY_PACKS[saga.id] : null;
-                return pack?.entries?.length ? pack.entries : [
-                    { id: `${saga.id}_fallback_start`, triggerProgress: 0, title: `${saga.name} Begins`, summary: [dbzThreeSentences(saga.desc, saga)] },
-                    { id: `${saga.id}_fallback_focus`, triggerProgress: 0.5, title: `${saga.name} Pressure`, summary: [`Training focus turns ${saga.name} from a locked target into an earned benchmark.`] },
-                    { id: `${saga.id}_fallback_clear`, triggerProgress: 1, title: `${saga.name} Cleared`, summary: [`Clearing ${saga.name} should open the next meaningful tier of the campaign.`] }
-                ];
+                return window.DBZ_V6_STORY_DATA?.sagas?.[saga.id]?.entries || [];
             }
 
             function v5RenderCompleteSagaStoryArchive(char) {
-                return SAGAS.map(saga => {
-                    const progress = ensureSagaProgress(char, saga.id);
-                    const status = getSagaStatus(char, saga.id);
-                    const ratio = typeof getSagaFocusProgressRatio === 'function' ? getSagaFocusProgressRatio(char, saga.id) : 0;
-                    const entries = v5SagaStoryArchiveEntries(saga);
-                    const unlocked = entries.filter(entry => (typeof hasUnlockedStoryEntry === 'function' ? hasUnlockedStoryEntry(char, entry.id) : false) || ratio >= v5_num(entry.triggerProgress));
-                    const shouldOpen = char.activeSagaFocus === saga.id || status === 'unlocked';
-                    return `<details class="v5-saga-archive-item ${status}" ${shouldOpen ? 'open' : ''}>
-                        <summary><strong>${v5_escape(saga.name)}</strong><span>${v5SagaStatusLabel(status)} | ${unlocked.length}/${entries.length} story beats</span></summary>
-                        <div class="v5-saga-archive-body">
-                            <div class="v5-mini-note">Focus XP ${formatPointValue(progress.focusXP)} / ${formatPointValue(saga.clearReqs?.focusXP || 0)} | Clear target ${formatPointValue(saga.clearReqs?.storyXP || 0)} Story XP</div>
-                            <div class="v5-saga-story-grid">
-                                ${entries.map(entry => {
-                                    const open = (typeof hasUnlockedStoryEntry === 'function' ? hasUnlockedStoryEntry(char, entry.id) : false) || ratio >= v5_num(entry.triggerProgress);
-                                    const summary = Array.isArray(entry.summary) ? entry.summary.join(' ') : String(entry.summary || '');
-                                    return `<div class="v5-saga-story-entry ${open ? 'open' : 'locked'}">
-                                        <div class="v5-kicker">${open ? 'Unlocked' : `At ${Math.round(v5_num(entry.triggerProgress) * 100)}% focus`}</div>
-                                        <h4>${v5_escape(entry.title)}</h4>
-                                        <p>${open ? v5_escape(dbzThreeSentences(summary, saga)) : 'Locked story beat. Focus this saga to reveal it.'}</p>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-                        </div>
-                    </details>`;
-                }).join('');
+                return window.DBZ_V6_STORY_UI?.renderCompleteSagaStoryArchive(char, SAGAS)
+                    || '<div class="v5-mini-note">Story archive unavailable.</div>';
             }
             window.v5RenderCompleteSagaStoryArchive = v5RenderCompleteSagaStoryArchive;
 
@@ -21003,63 +20975,9 @@ function getAbilityArt(abilityId) {
                 ultra_instinct_goku: ['Autonomous Twitch', 'Sign Memory', 'Calm Heart', 'Limit Break Episode', 'Silver Focus', 'Moro Arc Refinement', 'True Ultra Instinct Path']
             };
 
-            SAGA_STORY_PACKS = {
-                db_pilaf: {
-                    title: 'Emperor Pilaf Saga',
-                    mode: 'episode',
-                    entries: [
-                        { id: 'db_pilaf_ep001', order: 1, triggerProgress: 0.00, title: 'The Search Begins', summary: ['The first Dragon Ball journey starts with curiosity, scattered clues, and a strange team forming around Goku.', 'Your early training mirrors that small beginning, where consistency matters more than raw power.'], tags: ['db', 'pilaf'] },
-                        { id: 'db_pilaf_ep002', order: 2, triggerProgress: 0.50, title: 'Capsules and Consequences', summary: ['Bulma turns planning and tools into a real advantage for the team.', 'The saga rewards steady habits, useful allies, and learning how each system fits together.'], tags: ['bulma', 'planning'] },
-                        { id: 'db_pilaf_ep003', order: 3, triggerProgress: 1.00, title: 'First Wish Pressure', summary: ['Pilaf shows that even low-power opponents can become dangerous when the stakes are high.', 'Clearing the saga marks the first proof that small numbers can still create momentum.'], tags: ['pilaf', 'clear'] }
-                    ]
-                },
-                dbz_vegeta: {
-                    title: 'Saiyan Saga',
-                    mode: 'episode',
-                    entries: [
-                        { id: 'dbz_vegeta_ep001', order: 1, triggerProgress: 0.00, title: 'Saiyans Arrive', summary: ['Earth learns that training has to scale beyond familiar limits.', 'Gravity, endurance, and partner pressure become central because the next enemies are no longer local rivals.'], tags: ['saiyan', 'earth'] },
-                        { id: 'dbz_vegeta_ep002', order: 2, triggerProgress: 0.50, title: 'The Prince Sets the Standard', summary: ['Vegeta turns pride into a measuring stick that makes every session feel sharper.', 'The saga should feel like the point where strength training and recovery start compounding.'], tags: ['vegeta', 'gravity'] },
-                        { id: 'dbz_vegeta_ep003', order: 3, triggerProgress: 1.00, title: 'After the Invasion', summary: ['Surviving the Saiyan conflict leaves the team stronger, battered, and aware of a wider universe.', 'Clearing the saga opens the door to Namek-scale goals and more serious character investment.'], tags: ['clear', 'namek'] }
-                    ]
-                },
-                dbz_frieza: {
-                    title: 'Frieza Saga',
-                    mode: 'episode',
-                    entries: [
-                        { id: 'dbz_frieza_ep001', order: 1, triggerProgress: 0.00, title: "Namek's Final Tyrant", summary: ['The battle on Namek sharpens into a confrontation with Frieza himself.', 'Every ally has to measure courage against a ruler who treats planets as disposable.'], tags: ['namek', 'frieza'] },
-                        { id: 'dbz_frieza_ep002', order: 2, triggerProgress: 0.50, title: 'Pressure Before Legend', summary: ['The gap between mortal effort and galactic power becomes impossible to ignore.', 'Partner boosts, transformations, and saga focus should now feel like connected engines instead of separate menus.'], tags: ['super_saiyan', 'frieza'] },
-                        { id: 'dbz_frieza_ep003', order: 3, triggerProgress: 1.00, title: 'A Legend Answers', summary: ['The first Super Saiyan breakthrough turns impossible numbers into a path forward.', 'Clearing this saga should make future scaling feel earned rather than arbitrary.'], tags: ['clear', 'saiyan'] }
-                    ]
-                }
-            };
-
-            CHARACTER_STORY_BEATS = {
-                kid_goku: [
-                    { trigger: { type: 'unlock' }, title: 'A Boy With a Tail', text: ['Kid Goku joins as a cheerful starter companion with no idea how high his ceiling really is.', 'His early boosts are modest, but fast levelling makes him one of the best long-term investments.'] },
-                    { trigger: { type: 'level', level: 180 }, title: 'What-If Super Saiyan Spark', text: ['After an impossible amount of training, Kid Goku touches a legend from a later age.', 'The card stays Kid Goku, but his support power jumps hard enough to challenge stronger allies.'] }
-                ],
-                bulma: [
-                    { trigger: { type: 'unlock' }, title: 'Capsule Genius', text: ['Bulma does not need a scouter number to change the pace of training.', 'Her value is planning, resources, and making every other system easier to use.'] },
-                    { trigger: { type: 'level', level: 100 }, title: 'Gravity Room Blueprints', text: ['Bulma turns training theory into equipment that can change the whole campaign.', 'Her milestone boosts make TP and preparation feel like real combat tools.'] }
-                ],
-                piccolo: [
-                    { trigger: { type: 'unlock' }, title: 'Demon Mentor', text: ['Piccolo brings harsh discipline and Spirit-focused training into the team.', 'His path rewards core, martial work, and calm pressure under fatigue.'] },
-                    { trigger: { type: 'level', level: 300 }, title: 'Potential Unleashed Seed', text: ['Piccolo learns to turn controlled strain into durable growth.', 'The milestone points toward his later Namekian awakenings without replacing the card.'] }
-                ],
-                majin_vegeta: [
-                    { trigger: { type: 'unlock' }, title: 'Dark Resolve', text: ['Majin Vegeta enters as a high-pressure partner with immediate strength impact.', 'He levels slower than early allies, but his base potency is meant to feel enormous.'] },
-                    { trigger: { type: 'level', level: 180 }, title: 'Final Explosion Seed', text: ['The card begins converting pride and sacrifice into a major breakthrough.', 'His milestone should feel much heavier than anything an early Earthling can give at the same level.'] }
-                ],
-                ultra_instinct_goku: [
-                    { trigger: { type: 'unlock' }, title: 'Autonomous Movement', text: ['Ultra Instinct Goku represents a late-game support ceiling built around calm movement and God Ki.', 'Even at low level he should feel like a divine unlock rather than another normal partner.'] },
-                    { trigger: { type: 'level', level: 500 }, title: 'True Ultra Instinct Path', text: ['The card shifts from borrowed calm into a personal fighting rhythm.', 'Its late milestones are designed to keep divine partners meaningful for very long play.'] }
-                ]
-            };
-
-            GLOBAL_STORY_EVENTS = [
-                { id: 'pl_1_million_story', trigger: { type: 'displayPL', min: 1000000 }, title: 'Scouter Static', text: ['Your displayed Power Level has crossed into numbers that make ordinary readings unreliable.', 'The jump comes from training, partners, transformations, abilities, and saga progress compounding together.'] },
-                { id: 'pl_1_billion_story', trigger: { type: 'displayPL', min: 1000000000 }, title: 'The Scouter Gives Up', text: ['Your training output has entered a range where old comparisons stop being useful.', 'The next goals are not just bigger sessions, but better builds and stronger partner investment.'] }
-            ];
+            SAGA_STORY_PACKS = window.DBZ_V6_STORY_DATA?.sagas || {};
+            CHARACTER_STORY_BEATS = window.DBZ_V6_STORY_DATA?.characters || {};
+            GLOBAL_STORY_EVENTS = [];
 
             window.PARTNER_MILESTONES = PARTNER_MILESTONES;
             window.SAGA_STORY_PACKS = SAGA_STORY_PACKS;
@@ -21293,33 +21211,16 @@ function getAbilityArt(abilityId) {
             }
 
             function ensureStoryLog(char) {
-                if (!char.storyLog || typeof char.storyLog !== 'object' || Array.isArray(char.storyLog)) char.storyLog = {};
-                char.storyLog.unlockedEntries = char.storyLog.unlockedEntries && typeof char.storyLog.unlockedEntries === 'object' ? char.storyLog.unlockedEntries : {};
-                char.storyLog.readEntries = char.storyLog.readEntries && typeof char.storyLog.readEntries === 'object' ? char.storyLog.readEntries : {};
-                char.storyLog.lastUnlockedEntryIds = Array.isArray(char.storyLog.lastUnlockedEntryIds) ? char.storyLog.lastUnlockedEntryIds : [];
-                return char.storyLog;
+                return window.DBZ_V6_STORY_UI?.ensureStoryLog(char).log || char?.storyLog || {};
             }
 
-            function unlockStoryEntry(char, entry) {
-                if (!char || !entry?.id) return false;
-                const log = ensureStoryLog(char);
-                if (log.unlockedEntries[entry.id]) return false;
-                log.unlockedEntries[entry.id] = {
-                    id: entry.id,
-                    title: entry.title || 'Story Entry',
-                    text: entry.text || entry.summary || [],
-                    type: entry.type || 'story',
-                    source: entry.source || '',
-                    tags: entry.tags || [],
-                    unlockedAt: new Date().toISOString()
-                };
-                log.lastUnlockedEntryIds.unshift(entry.id);
-                log.lastUnlockedEntryIds = log.lastUnlockedEntryIds.slice(0, 12);
-                return true;
+            function unlockStoryEntry() {
+                // Authored content is resolved by ID; generated prose is never written to saves.
+                return false;
             }
 
             function hasUnlockedStoryEntry(char, id) {
-                return !!char?.storyLog?.unlockedEntries?.[id];
+                return char?.storyLog?.entries?.[id]?.unlocked === true;
             }
 
             function getSagaFocusProgressRatio(char, sagaId) {
@@ -21331,57 +21232,24 @@ function getAbilityArt(abilityId) {
             }
 
             function updateSagaStoryUnlocks(char, sagaId) {
-                const pack = SAGA_STORY_PACKS[sagaId];
-                if (!pack) return [];
-                const ratio = getSagaFocusProgressRatio(char, sagaId);
-                const newly = [];
-                (pack.entries || []).forEach(entry => {
-                    if (ratio >= s5_num(entry.triggerProgress) && !hasUnlockedStoryEntry(char, entry.id)) {
-                        const payload = { ...entry, type: 'saga', source: pack.title, text: entry.summary };
-                        if (unlockStoryEntry(char, payload)) newly.push(payload);
-                    }
-                });
-                return newly;
+                const result = window.DBZ_V6_STORY_UI?.syncStoryUnlocks(char);
+                return (result?.newlyUnlocked || []).filter(id => window.DBZ_V6_STORY_UI?.findSagaEntry(id)?.sagaId === sagaId);
             }
 
             function updateCharacterStoryUnlocks(char, partnerId) {
-                const partner = getPartnerById(partnerId);
-                if (!partner) return [];
-                const beats = CHARACTER_STORY_BEATS[partnerId] || [];
-                const level = getPartnerLevel(char, partnerId);
-                const newly = [];
-                beats.forEach((beat, index) => {
-                    const id = `${partnerId}_story_${beat.trigger?.type || 'beat'}_${beat.trigger?.level || index}`;
-                    const unlocked = beat.trigger?.type === 'unlock' ? (char.ownedPartners || []).includes(partnerId) : level >= s5_num(beat.trigger?.level);
-                    if (unlocked && !hasUnlockedStoryEntry(char, id)) {
-                        const payload = { id, type: 'character', source: partner.name, title: beat.title, text: beat.text, tags: [partnerId] };
-                        if (unlockStoryEntry(char, payload)) newly.push(payload);
-                    }
-                });
-                return newly;
+                const result = window.DBZ_V6_STORY_UI?.syncStoryUnlocks(char);
+                const ids = new Set((window.DBZ_V6_STORY_DATA?.characters?.[partnerId]?.beats || []).map(beat => beat.id));
+                return (result?.newlyUnlocked || []).filter(id => ids.has(id));
             }
 
-            function updateGlobalStoryUnlocks(char) {
-                const newly = [];
-                GLOBAL_STORY_EVENTS.forEach(event => {
-                    let ok = false;
-                    if (event.trigger?.type === 'displayPL') ok = getPowerLevel(char) >= s5_num(event.trigger.min);
-                    if (ok && !hasUnlockedStoryEntry(char, event.id)) {
-                        const payload = { ...event, type: 'global', source: 'Power Milestone' };
-                        if (unlockStoryEntry(char, payload)) newly.push(payload);
-                    }
-                });
-                return newly;
+            function updateGlobalStoryUnlocks() {
+                return [];
             }
 
             function updateAllStoryUnlocks(char) {
                 if (!char) return [];
-                ensureStoryLog(char);
-                let newly = [];
-                SAGAS.forEach(saga => { newly = newly.concat(updateSagaStoryUnlocks(char, saga.id)); });
-                (char.ownedPartners || []).forEach(id => { newly = newly.concat(updateCharacterStoryUnlocks(char, id)); });
-                newly = newly.concat(updateGlobalStoryUnlocks(char));
-                return newly;
+                const result = window.DBZ_V6_STORY_UI?.syncStoryUnlocks(char);
+                return result?.newlyUnlocked || [];
             }
 
             function unlockPartnerMilestonesForLevel(char, partnerId, level) {
@@ -21392,14 +21260,7 @@ function getAbilityArt(abilityId) {
                     if (level >= milestone.level && !progress.unlockedMilestones.includes(milestone.id)) {
                         progress.unlockedMilestones.push(milestone.id);
                         newly.push(milestone);
-                        unlockStoryEntry(char, {
-                            id: `${partnerId}_milestone_story_${milestone.level}`,
-                            title: milestone.name,
-                            text: milestone.story,
-                            type: 'milestone',
-                            source: partner?.name || partnerId,
-                            tags: [partnerId, ...(milestone.tags || [])]
-                        });
+                        window.DBZ_V6_STORY_UI?.recordPartnerMilestone(char, partnerId, milestone);
                     }
                 });
                 progress.masteryRank = getPartnerInfiniteMasteryRank(progress.level);
@@ -22088,49 +21949,25 @@ function getRaceAbsorptionKind(char) {
 
             function renderStoryCodex(filter = 'current') {
                 const char = getActiveCharacter();
-                ensureSupplementalCharacter(char);
-                updateAllStoryUnlocks(char);
-                const display = document.getElementById('storyCodexDisplay');
-                if (!display) return;
-                const entries = Object.values(char.storyLog.unlockedEntries || {}).sort((a, b) => String(b.unlockedAt || '').localeCompare(String(a.unlockedAt || '')));
-                const currentSaga = typeof getActiveSagaFocus === 'function' ? getActiveSagaFocus(char) : (typeof getCurrentSaga === 'function' ? getCurrentSaga(char) : null);
-                const filtered = entries.filter(entry => {
-                    if (filter === 'unread') return !char.storyLog.readEntries[entry.id];
-                    if (filter === 'characters') return entry.type === 'character' || entry.type === 'milestone';
-                    if (filter === 'current') return !currentSaga || entry.source === currentSaga.name || (entry.tags || []).includes(currentSaga.id);
-                    return true;
-                });
-                display.innerHTML = `
-                    <div class="v5-section-intro"><strong>Story Codex</strong><span>${entries.length} entries unlocked | Latest story appears as you train, clear sagas, and level partners.</span></div>
-                    <div class="v5s-filter-row">
-                        ${['current', 'unread', 'characters', 'all'].map(id => `<button class="btn-small ${filter === id ? 'btn-success' : ''}" onclick="renderStoryCodex('${id}')">${id[0].toUpperCase() + id.slice(1)}</button>`).join('')}
-                    </div>
-                    <div class="v5s-story-grid">
-                        ${(filtered.length ? filtered : entries).map(entry => `<div class="v5s-story-card ${char.storyLog.readEntries[entry.id] ? 'read' : 'unread'}" onclick="markStoryEntryRead('${s5_escape(entry.id)}')">
-                            <div class="v5-kicker">${s5_escape(entry.type || 'story')} ${entry.source ? `| ${s5_escape(entry.source)}` : ''}</div>
-                            <h3>${s5_escape(entry.title)}</h3>
-                            <p>${s5_escape((entry.text || []).join(' '))}</p>
-                        </div>`).join('') || '<div class="v5-mini-note">No story entries unlocked yet.</div>'}
-                    </div>
-                `;
+                return window.DBZ_V6_STORY_UI?.renderCodex(char, filter, SAGAS);
             }
 
             function markStoryEntryRead(id) {
                 const char = getActiveCharacter();
-                ensureStoryLog(char);
-                char.storyLog.readEntries[id] = true;
+                if (!window.DBZ_V6_STORY_UI?.markStoryEntryRead(char, id)) return;
                 saveState();
                 renderStoryCodex();
+                if (typeof renderSagas === 'function') renderSagas();
             }
 
             function installStoryCodexTab() {
-                const nav = document.querySelector('.tab-nav');
+                const nav = document.querySelector('.tabbar-left') || document.querySelector('.tab-nav');
                 if (nav && !document.querySelector('[data-tab="story"]')) {
                     const btn = document.createElement('button');
                     btn.className = 'tab-btn';
                     btn.dataset.tab = 'story';
                     btn.textContent = 'Story';
-                    const before = document.querySelector('[data-tab="achievements"]');
+                    const before = nav.querySelector('[data-tab="character"]');
                     nav.insertBefore(btn, before || null);
                     btn.addEventListener('click', () => {
                         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -22189,11 +22026,11 @@ function getRaceAbsorptionKind(char) {
             const s5_previousCompleteWorkout = completeWorkout;
             completeWorkout = function() {
                 const char = getActiveCharacter();
-                const beforeStoryCount = Object.keys(char?.storyLog?.unlockedEntries || {}).length;
+                const beforeStoryCount = Object.values(char?.storyLog?.entries || {}).filter(entry => entry?.unlocked).length;
                 const result = s5_previousCompleteWorkout();
                 const activeChar = getActiveCharacter();
                 normalizeSupplementalState();
-                const newEntries = Object.values(activeChar?.storyLog?.unlockedEntries || {}).length - beforeStoryCount;
+                const newEntries = Object.values(activeChar?.storyLog?.entries || {}).filter(entry => entry?.unlocked).length - beforeStoryCount;
                 if (newEntries > 0 && typeof showNotification === 'function') showNotification('Story Updated', `${newEntries} new Codex entr${newEntries === 1 ? 'y' : 'ies'} unlocked`, 'success');
                 return result;
             };
@@ -22755,12 +22592,8 @@ function getRaceAbsorptionKind(char) {
         }
 
         function dbzLatestStoryForSaga(char, saga) {
-            const entries = Object.values(char?.storyLog?.unlockedEntries || {});
-            const matches = entries.filter(entry => entry.source === saga?.name || (entry.tags || []).includes(saga?.id));
-            const latest = (matches.length ? matches : entries)
-                .sort((a, b) => String(b.unlockedAt || '').localeCompare(String(a.unlockedAt || '')))[0];
-            if (!latest) return dbzThreeSentences('', saga);
-            return dbzThreeSentences(latest.text || latest.desc || latest.title, saga);
+            return window.DBZ_V6_STORY_UI?.latestSagaText(char, saga)
+                || (saga?.name || 'This saga') + ' has not revealed a chapter yet.';
         }
 
         function renderDashboardMissionsStory() {

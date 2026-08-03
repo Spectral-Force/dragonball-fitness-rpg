@@ -92,6 +92,10 @@ img {
     max-width: 100%;
 }
 
+.modal.active {
+    z-index: 3000;
+}
+
 .dbz-panel,
 .card,
 .modal-content {

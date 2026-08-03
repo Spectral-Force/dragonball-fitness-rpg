@@ -333,6 +333,7 @@
                     <div class="v6-more-head"><h2 id="v6MoreTitle">More</h2><button type="button" data-v6-close aria-label="Close more menu">Close</button></div>
                     <div class="v6-more-grid">
                         ${[
+                            ['story', 'Story Codex'],
                             ['character', 'Partners'],
                             ['abilities', 'Abilities'],
                             ['transformations', 'Transformations'],
