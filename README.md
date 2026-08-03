@@ -1,7 +1,7 @@
 # Dragon Ball Fitness RPG v6
 
 Version: v6.4
-Build: 6.4.0-20260803.7
+Build: 6.4.0-20260803.8
 Save schema: 33
 Canonical entry: `DragonBall_Fitness_RPG_v6.0.html`
 
@@ -69,7 +69,7 @@ Imports are bounded to 10 MB and validated for depth, collection sizes, finite n
 
 Normal rest does not permanently erase stats. The Today view uses readiness, a 14-day no-training grace period and a flexible three-day weekly consistency target. Optional illness, injury, deload, RPE, RIR and notes are stored with workouts. This is a motivation game, not medical advice; stop or adapt for pain, illness, unsafe technique or professional guidance.
 
-`manifest-v6.webmanifest` and `dbz-sw-v6.0.js` cache the shell, story libraries, icons, route UI and featured art. Navigation, scripts and styles are network-first with offline shell fallbacks; larger images use stale-while-revalidate. Successful online asset loads refresh both versioned and canonical cache keys, repairing any mixed GitHub Pages edge deployment. A versioned, cache-bypassing worker bootstrap hands returning devices to the new release and refreshes an already-open stale shell once. The service-worker cache is versioned to build 6.4.0-20260803.7.
+`manifest-v6.webmanifest` and `dbz-sw-v6.0.js` cache the shell, story libraries, icons, route UI and featured art. Navigation, scripts and styles are network-first with offline shell fallbacks; larger images use stale-while-revalidate. Successful online asset loads refresh both versioned and canonical cache keys, repairing any mixed GitHub Pages edge deployment. A versioned, cache-bypassing worker bootstrap retries after legacy runtime initialization, hands returning devices to the new release and refreshes an already-open stale shell once. The service-worker cache is versioned to build 6.4.0-20260803.8.
 
 ## Visual system
 

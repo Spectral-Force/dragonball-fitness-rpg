@@ -106,6 +106,8 @@ test("release metadata stays synchronized across the generated shell and PWA", (
     assert.equal(manifest.name, `Dragon Ball Fitness RPG ${releaseVersion}`);
     assert.match(html, new RegExp(`serviceWorker\\.register\\('./dbz-sw-v6\\.0\\.js\\?v=${escapedBuildId}[^)]*updateViaCache`));
     assert.match(html, /controllerchange[\s\S]{0,120}location\.reload\(\)/);
+    assert.match(html, /setTimeout\(registerReleaseWorker, 1500\)/);
+    assert.match(html, /setTimeout\(registerReleaseWorker, 5000\)/);
     assert.match(game, new RegExp(`serviceWorker\\.register\\('./dbz-sw-v6\\.0\\.js\\?v=${escapedBuildId}[^)]*updateViaCache`));
     assert.ok(html.indexOf("serviceWorker.register('./dbz-sw-v6.0.js") < html.indexOf('dbz-v6-config.js'), "worker bootstrap must precede cached runtime assets");
 });

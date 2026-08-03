@@ -8,7 +8,7 @@ const ANALYSIS_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const DESTINATION = path.resolve(ANALYSIS_DIRECTORY, "..");
 const RELEASE_VERSION = "v6.4";
 const SAVE_SCHEMA_VERSION = 33;
-const BUILD_ID = "6.4.0-20260803.7";
+const BUILD_ID = "6.4.0-20260803.8";
 const LEGACY_SOURCE_COMMIT = "8ac683b";
 const repositoryCandidates = [
   path.resolve(DESTINATION, "..", "..", "DragonBall-Fitness-RPG-Mobile"),
@@ -1141,12 +1141,17 @@ javascript = replaceRequired(
 const serviceWorkerBootstrap = `    <script>
         if ('serviceWorker' in navigator && location.protocol !== 'file:') {
             const hadController = Boolean(navigator.serviceWorker.controller);
+            const registerReleaseWorker = () => navigator.serviceWorker.register('./dbz-sw-v6.0.js?v=${BUILD_ID}', { updateViaCache: 'none' })
+                .then(registration => registration.update())
+                .catch(() => {});
             if (hadController) {
                 navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
             }
-            navigator.serviceWorker.register('./dbz-sw-v6.0.js?v=${BUILD_ID}', { updateViaCache: 'none' })
-                .then(registration => registration.update())
-                .catch(() => {});
+            registerReleaseWorker();
+            window.addEventListener('load', () => {
+                setTimeout(registerReleaseWorker, 1500);
+                setTimeout(registerReleaseWorker, 5000);
+            }, { once: true });
         }
     </script>`;
 

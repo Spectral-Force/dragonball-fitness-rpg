@@ -2,7 +2,7 @@
 
 importScripts('./v6-asset-manifest.js');
 
-const BUILD_ID = '6.4.0-20260803.7';
+const BUILD_ID = '6.4.0-20260803.8';
 const VERSION = `v${BUILD_ID}`;
 const SHELL_CACHE = `dbz-fitness-shell-${VERSION}`;
 const ASSET_CACHE = `dbz-fitness-assets-${VERSION}`;

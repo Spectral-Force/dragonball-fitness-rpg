@@ -1,6 +1,6 @@
 # Dragon Ball Fitness RPG v6 Changelog
 
-## v6.4 - build 6.4.0-20260803.7
+## v6.4 - build 6.4.0-20260803.8
 
 ### Complete story campaign
 
@@ -23,10 +23,11 @@
 
 - Added desktop Story navigation and a mobile Story Codex item in More while retaining Saga on the primary bottom bar.
 - Raised active modals above the mobile navigation so first-run setup and other modal actions remain reachable.
-- Added the story data, engine, UI and CSS to the offline application shell and advanced its cache to build 6.4.0-20260803.7.
+- Added the story data, engine, UI and CSS to the offline application shell and advanced its cache to build 6.4.0-20260803.8.
 - Made cache lookup ignore version query strings so the versioned browser shell starts correctly from the unversioned offline cache.
 - Added a cache-bypassing, build-versioned service-worker bootstrap that automatically refreshes a returning browser once when a new release takes control.
 - Made scripts, styles and the manifest network-first while online, updating both canonical and versioned cache keys so a non-atomic Pages deployment cannot strand an old runtime beneath new HTML.
+- Retried the release-worker registration after legacy runtime initialization so a cached older runtime cannot restore its previous worker registration over the new build.
 - Added schema, unlock, migration, content, roster, continuity and regression tests. Release result: 67/67 automated tests pass, 38/38 saga packs validate, 496 production narrative IDs are unique and browser QA reports no console warnings or errors.
 
 ## v6.3 - build 6.3.0-20260803.1
