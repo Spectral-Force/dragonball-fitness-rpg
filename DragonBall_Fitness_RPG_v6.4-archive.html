@@ -1,0 +1,524 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="dbz-build" content="6.4.0-20260803.8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Dragon Ball Fitness RPG v6</title>
+    <meta name="description" content="A three-year, offline-first fitness RPG with race-specific progression, transformations, abilities, partners, and story sagas.">
+    <meta name="theme-color" content="#ff7a18">
+    <meta name="application-name" content="DB Fitness RPG v6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="DB Fitness RPG">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest-v6.webmanifest">
+    <link rel="icon" href="icons/icon-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+        <link rel="stylesheet" href="dbz-v6.css?v=6.4.0-20260803.8">
+    <link rel="stylesheet" href="dbz-v6-overrides.css?v=6.4.0-20260803.8">
+    <link rel="stylesheet" href="dbz-v6-story.css?v=6.4.0-20260803.8">
+</head>
+<body>
+    <header class="dbz-top-banner">
+        <h1 class="game-title">Dragon Ball Fitness RPG <span class="v6-build-badge">v6.4 · 6.4.0-20260803.8</span></h1>
+        <div class="tabs top-tabbar">
+            <div class="tabbar-left">
+                <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+                <button class="tab-btn" data-tab="training">Training</button>
+                <button class="tab-btn" data-tab="sagas">Saga</button>
+                <button class="tab-btn" data-tab="character">Partner</button>
+                <button class="tab-btn" data-tab="abilities">Ability</button>
+                <button class="tab-btn" data-tab="transformations">Transformation</button>
+                <button class="tab-btn" data-tab="dragonballs">Dragon Balls</button>
+            </div>
+            <div class="tabbar-right">
+                <button class="tab-btn top-action-btn plan-action-btn" id="planBtn" data-tab="fitness-plan">Plan</button>
+                <button class="top-action-btn" id="exportBtn">Save</button>
+                <button class="top-action-btn" id="importBtn">Load</button>
+                <button class="tab-btn top-action-btn history-tab-btn" data-tab="history">History</button>
+                <button class="tab-btn top-action-btn history-tab-btn" data-tab="achievements">Achievement</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Faded per-tab background overlay — image set dynamically by JS -->
+    <div id="tabBgOverlay"></div>
+
+    <div class="container">
+        <div id="pwaInstallCard" class="card pwa-install-card">
+            <div>
+                <div style="color:#ffaa00;font-weight:bold;">Mobile Offline Mode</div>
+                <div style="color:#aaa;font-size:0.85rem;">Install this version on your phone and use Export/Import Save when moving progress between devices.</div>
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <button id="installPwaBtn" class="btn-success btn-small">Install App</button>
+                <button id="dismissPwaBtn" class="btn-secondary btn-small">Dismiss</button>
+            </div>
+        </div>
+
+        <!-- Fitness Plan Tab -->
+        <div id="fitness-plan" class="tab-content fitness-plan-page dashboard-cascade">
+            <section class="dbz-panel fitness-plan-panel">
+                <h2 class="dbz-panel-title">FITNESS PLAN</h2>
+                <div class="plan-page-sub">Four weeks, seven days, editable exercises, calculated loads, and direct template/workout integration.</div>
+                <div id="fitnessPlanBody"></div>
+            </section>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active dashboard-cascade">
+            <div id="welcomeMsg"></div>
+
+            <div class="legacy-dashboard-hooks" aria-hidden="true">
+                <span id="charName"></span>
+                <span id="transformDisplay"></span>
+                <span id="currentSagaName"></span>
+                <span id="powerLevelDisplay"></span>
+                <span id="streakNum"></span>
+                <span id="levelDisplay"></span>
+                <span id="spDisplay"></span>
+                <span id="tpDisplay"></span>
+                <div id="racePanel"></div>
+                <div id="godPLRow"><span id="godPowerLevelDisplay"></span></div>
+                <div id="xpBar"></div><span id="xpLabel"></span><span id="xpToNextLevel"></span><span id="xpPct"></span>
+                <div id="tpProgressBar"></div><span id="tpProgressLabel"></span><span id="tpProgressTarget"></span><span id="tpProgressPct"></span>
+                <div id="dashboardStats"></div>
+                <div id="statsGoalPanel"></div>
+                <div id="statsDisplay"></div>
+                <span id="totalTxpDisplay"></span>
+                <span id="totalWorkoutsDisplay"></span>
+                <div id="dashboardMilestoneBanner"></div>
+                <div id="weeklyRivalCard" style="display:none;"></div>
+            </div>
+
+            <section class="dbz-panel overview-panel">
+                <h2 class="dbz-panel-title">OVERVIEW</h2>
+                <div class="overview-head-grid">
+                    <div class="overview-detail-list">
+                        <div class="overview-detail-row"><span class="overview-detail-label">Name:</span><span id="overviewCharName" class="overview-detail-value">Tim</span></div>
+                        <div class="overview-detail-row"><span class="overview-detail-label">Race:</span><span id="overviewRace" class="overview-detail-value">Earthling</span></div>
+                        <div class="overview-detail-row"><span class="overview-detail-label">Level:</span><span id="overviewLevel" class="overview-detail-value">1</span></div>
+                        <div class="overview-detail-row"><span class="overview-detail-label">Saga:</span><span id="overviewSaga" class="overview-detail-value">Emperor Pilaf Saga</span></div>
+                        <div class="overview-detail-row"><span class="overview-detail-label">Streak:</span><span class="overview-detail-value overview-streak-value"><span id="overviewStreak">0</span> days</span></div>
+                    </div>
+                    <div class="overview-power-block">
+                        <div class="overview-power-line">
+                            <span class="overview-power-label">Power Level:</span>
+                            <span id="overviewPowerLevel" class="overview-power-value">5</span>
+                        </div>
+                        <div class="overview-power-line">
+                            <span class="overview-power-label">God Level:</span>
+                            <span id="overviewGodPowerLevel" class="overview-god-value">N/A</span>
+                        </div>
+                        <div class="overview-recovery-status">
+                            <div class="overview-recovery-row"><span class="overview-recovery-label">Last Rest:</span><span id="overviewLastRest" class="overview-recovery-value">None</span></div>
+                            <div class="overview-recovery-row"><span class="overview-recovery-label">Rest Bonus:</span><span id="overviewRestBonus" class="overview-recovery-value">0%</span></div>
+                            <div class="overview-recovery-row"><span class="overview-recovery-label">No-log Decay:</span><span id="overviewNoLogDecay" class="overview-recovery-value safe">Safe</span></div>
+                            <div class="overview-recovery-row"><span class="overview-recovery-label">Weekly Risk:</span><span id="overviewWeeklyRisk" class="overview-recovery-value">None</span></div>
+                        </div>
+                    </div>
+                    <div class="overview-progress-grid">
+                        <div class="overview-progress-card txp">
+                            <div class="overview-progress-copy"><span id="overviewTxpLabel">0 TXP this level</span><span id="overviewTxpNext">0 to next level</span></div>
+                            <div class="overview-mini-bar"><div id="overviewTxpBar"></div></div>
+                        </div>
+                        <div class="overview-progress-card ap">
+                            <div class="overview-progress-copy"><span id="overviewApLabel">0 AP available</span><span id="overviewApHint">0 to next AP</span></div>
+                            <div class="overview-mini-bar"><div id="overviewApBar"></div></div>
+                        </div>
+                        <div class="overview-progress-card tp">
+                            <div class="overview-progress-copy"><span id="overviewTpLabel">0 TP available</span><span id="overviewTpHint">0 to next TP</span></div>
+                            <div class="overview-mini-bar"><div id="overviewTpBar"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="dbz-panel core-stats-panel">
+                <h2 class="dbz-panel-title">CORE STATS</h2>
+                <div class="core-stats-grid">
+                    <div class="core-self-column">
+                        <div class="core-column-head"><div id="coreSelfName" class="core-self-name">Tim</div></div>
+                        <div id="coreStatsList" class="core-stat-list"></div>
+                        <div class="core-transform-picker">
+                            <label for="coreTransformSelect">Transformation</label>
+                            <select id="coreTransformSelect" onchange="setCoreTransformationPreview(this.value)"></select>
+                        </div>
+                    </div>
+                    <div class="core-rival-column">
+                        <div class="core-column-head core-rival-head">
+                            <span>RIVAL:</span>
+                            <button id="p2ImportBtn" class="top-action-btn" onclick="handleP2BtnClick()" title="Select a rival save to compare">LOAD</button>
+                        </div>
+                        <div id="coreRivalStatsList" class="core-stat-list"></div>
+                        <div class="core-rival-actions">
+                            <button class="top-action-btn" id="compareHeaderBtn" style="display:none;" onclick="openCompareModal()">Compare</button>
+                        </div>
+                    </div>
+                    <div class="core-goal-column">
+                        <div class="core-column-head core-goal-heading"><span>Goal:</span><select id="coreGoalSelect" onchange="setDashboardGoalTarget(this.value)"></select></div>
+                        <div id="coreGoalProgress" class="core-goal-progress"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="dbz-panel missions-panel">
+                <h2 class="dbz-panel-title">MISSIONS</h2>
+                <div class="missions-grid">
+                    <div class="mission-saga-column">
+                        <div id="currentSagaDisplay"></div>
+                    </div>
+                    <div class="mission-story-column">
+                        <h3>Story Overview</h3>
+                        <div id="sagaStoryBanner"></div>
+                        <div id="sagaStorySummary" class="story-summary-line"></div>
+                        <div id="sagaStoryLatest" class="story-latest-line"></div>
+                    </div>
+                    <div class="mission-daily-column">
+                        <h3>Daily Missions <span id="missionDate"></span></h3>
+                        <div id="dailyMissions">Loading...</div>
+                    </div>
+                </div>
+                <div id="dashboardDragonBalls" class="dashboard-dragon-balls"></div>
+            </section>
+
+            <section class="dbz-panel equipped-panel">
+                <h2 class="dbz-panel-title">EQUIPPED</h2>
+                <div class="equipped-grid">
+                    <div class="equipped-column"><h3>PARTNERS</h3><div id="activeTeamPanel" class="active-team-panel"></div></div>
+                    <div class="equipped-column"><h3>ABILITIES</h3><div id="equippedAbilitiesPanel" class="equipped-list-panel"></div></div>
+                    <div class="equipped-column"><h3>TRANSFORMATIONS</h3><div id="equippedTransformationsPanel" class="equipped-list-panel"></div></div>
+                </div>
+            </section>
+
+            <section class="dbz-panel weekly-activity-panel">
+                <h2 class="dbz-panel-title">WEEKLY ACTIVITY</h2>
+                <div id="muscleHeatmap"></div>
+            </section>
+
+            <section class="dbz-panel chart-panel">
+                <h2 class="dbz-panel-title">PROGRESS CHART</h2>
+                <div class="chart-controls-stack">
+                    <div class="chart-control-row"><span class="chart-control-label">Show:</span>
+                        <button id="chartDeselectAll" class="btn-small chart-utility-btn">None</button>
+                        <button id="chartSelectAll" class="btn-small chart-utility-btn">All</button>
+                        <button class="btn-small chart-toggle active" data-series="STR">STR</button>
+                        <button class="btn-small chart-toggle active" data-series="END">END</button>
+                        <button class="btn-small chart-toggle active" data-series="AGI">AGI</button>
+                        <button class="btn-small chart-toggle active" data-series="VIT">VIT</button>
+                        <button class="btn-small chart-toggle active" data-series="SPI">SPI</button>
+                        <button class="btn-small chart-toggle active" data-series="TEC">TEC</button>
+                        <button class="btn-small chart-toggle" data-series="GKI">GKI</button>
+                        <button class="btn-small chart-toggle active" data-series="PL">PL</button>
+                        <button class="btn-small chart-toggle" data-series="BW">Body Weight</button>
+                    </div>
+                    <div class="chart-control-row"><span class="chart-control-label">Time frame:</span>
+                        <button class="btn-small chart-group active" data-group="day">Day</button>
+                        <button class="btn-small chart-group" data-group="week">Week</button>
+                        <button class="btn-small chart-group" data-group="month">Month</button>
+                        <button class="btn-small chart-range active" data-range="all">All</button>
+                        <button class="btn-small chart-range" data-range="1Y">1Y</button>
+                        <button class="btn-small chart-range" data-range="6M">6M</button>
+                        <button class="btn-small chart-range" data-range="3M">3M</button>
+                        <button class="btn-small chart-range" data-range="1M">1M</button>
+                        <button class="btn-small chart-range" data-range="1W">1W</button>
+                    </div>
+                    <div class="chart-control-row"><span class="chart-control-label">Limits:</span>
+                        <label>Y min <input id="chartYMinInput" type="number" step="1" placeholder="Auto"></label>
+                        <label>Y max <input id="chartYMaxInput" type="number" min="0" step="1" placeholder="Auto"></label>
+                        <label>X min <input id="chartXMinInput" type="date"></label>
+                        <label>X max <input id="chartXMaxInput" type="date"></label>
+                        <button id="chartLimitsApply" class="btn-small">Apply</button>
+                        <button id="chartLimitsReset" class="btn-small btn-secondary">Reset</button>
+                    </div>
+                </div>
+                <canvas id="statsChart"></canvas>
+                <div id="chartLegend"></div>
+            </section>
+
+            <section class="dbz-panel personal-records-panel">
+                <div class="pr-toolbar">
+                    <h2 class="dbz-panel-title">PERSONAL RECORDS</h2>
+                    <select id="prCategoryFilter" onchange="renderPersonalRecords()">
+                        <option value="none" selected>Select Exercise Category...</option>
+                        <option value="all">All Exercise Categories</option>
+                        <option value="strength">Strength Training</option>
+                        <option value="cardio">Cardio</option>
+                        <option value="core">Core</option>
+                        <option value="flexibility">Flexibility & Mobility</option>
+                        <option value="martial">Martial Arts</option>
+                    </select>
+                </div>
+                <div id="prDisplay">Choose an exercise category to view records.</div>
+            </section>
+        </div>
+
+        <!-- Training Tab -->
+        <div id="training" class="tab-content">
+            <div class="card compact-log-panel">
+                <div class="training-panel-head">
+                    <h2 class="training-panel-title">Active Workout</h2>
+                    <div id="sessionGainSummary" class="session-summary-card"></div>
+                </div>
+                <div class="training-command-bar">
+                    <label class="training-date-field">
+                        <span>Date</span>
+                        <input type="date" id="workoutDate">
+                    </label>
+                    <button class="training-action-btn utility" id="toggleBodyWeightBtn">Body Weight</button>
+                    <button class="training-action-btn primary" id="addExerciseBtn">Add Exercise</button>
+                    <button class="training-action-btn secondary" id="saveTemplateBtn">Save Template</button>
+                    <button class="training-action-btn secondary" id="loadTemplateBtn">Load Template</button>
+                    <button class="training-action-btn success" id="completeWorkoutBtn">Complete</button>
+                </div>
+                <div id="bodyWeightEntry" class="body-weight-entry">
+                    <div class="training-body-weight-grid">
+                        <label class="training-date-field">
+                            <span>Body Weight (kg)</span>
+                            <input type="number" id="bodyWeightInput" min="30" max="300" step="0.1" placeholder="e.g. 82.5">
+                        </label>
+                        <button class="training-action-btn utility" id="saveBodyWeightBtn">Save Weight</button>
+                    </div>
+                </div>
+                <div id="exerciseList"></div>
+            </div>
+            <div class="card dashboard-spaced training-points-panel">
+                <h2 class="training-section-title">Training Points</h2>
+                <div id="trainingDisplay"></div>
+            </div>
+        </div>
+
+        <!-- Character Tab -->
+        <div id="character" class="tab-content">
+            <div class="card">
+                <h2 class="partner-page-title">Partner</h2>
+                <div id="characterDisplay"></div>
+            </div>
+        </div>
+
+        <!-- Sagas Tab -->
+        <div id="sagas" class="tab-content">
+            <div id="sagasDisplay"></div>
+        </div>
+
+        <!-- Transformations Tab -->
+        <div id="transformations" class="tab-content">
+            <div id="transformationsDisplay"></div>
+        </div>
+
+        <!-- Dragon Balls Tab -->
+        <div id="dragonballs" class="tab-content">
+            <div class="card">
+                <h2 class="dragonball-page-title">Dragon Balls</h2>
+                <div id="dragonBallsDisplay"></div>
+            </div>
+        </div>
+
+        <!-- Abilities Tab -->
+        <div id="abilities" class="tab-content">
+            <div class="card">
+                <h2 class="ability-page-title">Ability</h2>
+                <div class="stat-label" style="margin-bottom: 1.5rem;">
+                    <span>Ability Points Available (SP):</span>
+                    <span id="spAvailDisplay" style="color: #aa44ff; font-size: 1.3rem;">0</span>
+                </div>
+                <div id="abilitiesDisplay"></div>
+            </div>
+        </div>
+
+            <div id="achievements" class="tab-content">
+            <div class="card">
+                <h2 style="color: #ffaa00; margin-bottom: 1rem;">Achievements</h2>
+                <div id="achievementsDisplay"></div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.5rem;">
+                    <h2 style="color:#ffaa00;">Workout History</h2>
+                    <div style="display:flex;gap:0.5rem;align-items:center;">
+                        <button class="btn-secondary btn-small" id="histCalPrev">◀</button>
+                        <span id="histCalMonthLabel" style="color:#ffaa00;font-weight:bold;min-width:120px;text-align:center;"></span>
+                        <button class="btn-secondary btn-small" id="histCalNext">▶</button>
+                    </div>
+                </div>
+                <div id="histCalendar" style="margin-bottom:1.5rem;"></div>
+                <div id="histDayDetail" style="display:none;">
+                    <div style="border-top:1px solid #2a1a44;padding-top:1.2rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                            <h3 id="histDayTitle" style="color:#ffaa00;"></h3>
+                            <div style="display:flex;gap:0.5rem;">
+                                <button class="btn-secondary btn-small" id="histEditBtn">Edit Workout</button>
+                                <button class="btn-danger btn-small" id="histCloseDayBtn">Close</button>
+                            </div>
+                        </div>
+                        <div id="histDayContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="reset-footer-bar">
+        <button class="reset-footer-btn preset-reset" id="resetPresetBtn" title="Restore built-in plan and template preset values">Reset Preset Values</button>
+        <button class="reset-footer-btn" id="resetBtn" title="Wipe all data and start fresh">Reset Game</button>
+    </div>
+
+    <!-- Edit Workout Modal -->
+    <div id="editWorkoutModal" class="modal">
+        <div class="modal-content" style="max-width:650px;">
+            <div class="modal-header">Edit Workout</div>
+            <div id="editWorkoutContent"></div>
+            <div class="modal-footer">
+                <button class="btn-danger" id="closeEditWorkoutModal">Cancel</button>
+                <button class="btn-success" id="saveEditWorkoutBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Modal -->
+    <div id="templatesModal" class="modal">
+        <div class="modal-content" style="max-width:600px;">
+            <div class="modal-header">📋 Workout Templates</div>
+            <div id="templatesListDiv"></div>
+            <div class="modal-footer">
+                <button onclick="document.getElementById('templatesModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apply Template Modal -->
+    <div id="applyTemplateModal" class="modal">
+        <div class="modal-content" style="max-width:650px;">
+            <div class="modal-header">📋 Load Template</div>
+            <p style="color:#aaa;font-size:0.85rem;margin-bottom:1rem;">Adjust weights and reps before loading.</p>
+            <div id="applyTemplateContent"></div>
+            <div class="modal-footer">
+                <button class="btn-danger" onclick="document.getElementById('applyTemplateModal').classList.remove('active')">Cancel</button>
+                <button class="btn-success" id="confirmApplyTemplateBtn">Load into Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Saga/Transformation Event Overlay -->
+    <div id="sagaEventOverlay">
+        <div id="sagaEventBox"></div>
+    </div>
+
+    <!-- Compare Modal -->
+    <div id="compareModal" class="modal">
+        <div class="modal-content compare-modal-content" style="max-width:700px;">
+            <div class="modal-header">⚔️ Player Comparison</div>
+            <div id="compareContent"></div>
+            <div class="modal-footer">
+                <button onclick="document.getElementById('compareModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Game Setup Modal -->
+    <div id="newGameModal" class="modal">
+        <div class="modal-content" style="max-width:520px;">
+            <div class="modal-header">🐉 Create Your Fighter</div>
+            <p style="color:#aaa;margin-bottom:1.25rem;font-size:0.9rem;">Set your name and race before beginning your training journey.</p>
+            <div class="stat-item">
+                <label style="display:block;margin-bottom:0.4rem;font-weight:bold;">Character Name:</label>
+                <input type="text" id="newGameName" placeholder="Enter your name..." style="width:100%;" maxlength="24">
+            </div>
+            <div class="stat-item" style="margin-top:1rem;">
+                <label style="display:block;margin-bottom:0.4rem;font-weight:bold;">Race:</label>
+                <div class="race-select-grid" id="raceSelectGrid">
+                    <div class="race-option selected" data-race="earthling" onclick="selectRaceOption(this)"><div class="race-icon">🌍</div><div class="race-label">Earthling</div></div>
+                    <div class="race-option" data-race="saiyan" onclick="selectRaceOption(this)"><div class="race-icon">💥</div><div class="race-label">Saiyan</div></div>
+                    <div class="race-option" data-race="hybrid" onclick="selectRaceOption(this)"><div class="race-icon">⚡</div><div class="race-label">Half-Saiyan</div></div>
+                    <div class="race-option" data-race="namekian" onclick="selectRaceOption(this)"><div class="race-icon">🟢</div><div class="race-label">Namekian</div></div>
+                    <div class="race-option" data-race="android" onclick="selectRaceOption(this)"><div class="race-icon">🤖</div><div class="race-label">Android</div></div>
+                    <div class="race-option" data-race="majin" onclick="selectRaceOption(this)"><div class="race-icon">🍬</div><div class="race-label">Majin</div></div>
+                    <div class="race-option" data-race="frieza_race" onclick="selectRaceOption(this)"><div class="race-icon">👾</div><div class="race-label">Frieza Race</div></div>
+                </div>
+            </div>
+            <div id="raceDescBox" style="margin-top:0.75rem;min-height:2.5rem;padding:0.6rem 0.8rem;background:#0e0e24;border-radius:6px;font-size:0.82rem;color:#aaa;border-left:3px solid #ff8c00;"></div>
+            <div class="modal-footer">
+                <button class="btn-success" onclick="confirmNewGame()">⚔️ Begin Training</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player 2 file input -->
+    <input type="file" id="p2FileInput" accept=".json" style="display:none;">
+
+    <!-- Add Exercise Modal -->
+    <div id="addExerciseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add Exercise</div>
+            <div class="stat-item">
+                <label style="display: block; margin-bottom: 0.5rem;">Category:</label>
+                <select id="exerciseCategory">
+                    <option value="">Select a category...</option>
+                    <option value="strength">Strength Training</option>
+                    <option value="cardio">Cardio</option>
+                    <option value="flexibility">Flexibility & Mobility</option>
+                    <option value="martial">Martial Arts</option>
+                    <option value="recovery">Recovery</option>
+                </select>
+            </div>
+            <div class="stat-item">
+                <label style="display: block; margin-bottom: 0.5rem;">Subcategory:</label>
+                <select id="exerciseSubcategory" disabled>
+                    <option value="">Select a subcategory...</option>
+                </select>
+            </div>
+            <div id="exerciseCategoryPreview" style="display:none;margin:-0.2rem 0 0.75rem 0;"></div>
+            <div class="stat-item">
+                <label style="display: block; margin-bottom: 0.5rem;">Exercise:</label>
+                <select id="exerciseName" disabled>
+                    <option value="">Select an exercise...</option>
+                </select>
+            </div>
+            <div id="exerciseInputs"></div>
+            <div id="exerciseRewardPreview" class="exercise-reward-preview"></div>
+            <div class="modal-footer">
+                <button class="btn-danger" id="closeExerciseModal">Cancel</button>
+                <button class="btn-success" id="addToSessionBtn">Add to Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="importFile" accept=".json" style="display: none;">
+
+        <script>
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            const hadController = Boolean(navigator.serviceWorker.controller);
+            const registerReleaseWorker = () => navigator.serviceWorker.register('./dbz-sw-v6.0.js?v=6.4.0-20260803.8', { updateViaCache: 'none' })
+                .then(registration => registration.update())
+                .catch(() => {});
+            if (hadController) {
+                navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+            }
+            registerReleaseWorker();
+            window.addEventListener('load', () => {
+                setTimeout(registerReleaseWorker, 1500);
+                setTimeout(registerReleaseWorker, 5000);
+            }, { once: true });
+        }
+    </script>
+    <script src="dbz-v6-config.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-progression-config.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-progression-core.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-story-db.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-story-dbz.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-story-super.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-story-characters.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-story-core.js?v=6.4.0-20260803.8"></script>
+    <script src="v6-asset-manifest.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-storage.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-enhancements.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-race-ui.js?v=6.4.0-20260803.8"></script>
+    <script src="dbz-v6-story-ui.js?v=6.4.0-20260803.8"></script>
+</body>
+</html>

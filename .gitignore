@@ -6,3 +6,6 @@ saves/
 .DS_Store
 Thumbs.db
 
+!v7/catalog-counts.json
+!v7/release.json
+dist/

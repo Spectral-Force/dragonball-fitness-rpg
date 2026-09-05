@@ -6,10 +6,11 @@ import { fileURLToPath } from "node:url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const read = name => fs.readFileSync(path.join(root, name), "utf8");
-const html = read("DragonBall_Fitness_RPG_v6.0.html");
+// The installed v6 entry now launches v7. These checks retain the historical v6 runtime contract.
+const html = read("DragonBall_Fitness_RPG_v6.4-archive.html");
 const game = read("dbz-v6.js");
 const storage = read("dbz-v6-storage.js");
-const serviceWorker = read("dbz-sw-v6.0.js");
+const serviceWorker = read("dbz-sw-v6.0-archive.js");
 const assetManifestSource = read("v6-asset-manifest.js");
 
 test("v6 is a split canonical build without embedded base64 assets", () => {
@@ -99,11 +100,10 @@ test("release metadata stays synchronized across the generated shell and PWA", (
     const buildId = html.match(/name="dbz-build" content="([^"]+)"/)?.[1];
     const serviceWorkerBuild = serviceWorker.match(/const BUILD_ID = '([^']+)'/)?.[1];
     const releaseVersion = read("dbz-v6-config.js").match(/version:\s*'([^']+)'/)?.[1];
-    const manifest = JSON.parse(read("manifest-v6.webmanifest"));
     const escapedBuildId = buildId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     assert.ok(buildId);
     assert.equal(serviceWorkerBuild, buildId);
-    assert.equal(manifest.name, `Dragon Ball Fitness RPG ${releaseVersion}`);
+    assert.equal(releaseVersion, 'v6.4');
     assert.match(html, new RegExp(`serviceWorker\\.register\\('./dbz-sw-v6\\.0\\.js\\?v=${escapedBuildId}[^)]*updateViaCache`));
     assert.match(html, /controllerchange[\s\S]{0,120}location\.reload\(\)/);
     assert.match(html, /setTimeout\(registerReleaseWorker, 1500\)/);

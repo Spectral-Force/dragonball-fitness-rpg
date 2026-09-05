@@ -1,0 +1,50 @@
+/* Full original compositions, with labels outside the illustration. */
+.collection-card.collection-abilities,.collection-card.collection-forms,.collection-card.collection-equipment{display:flex;flex-direction:column;align-items:stretch}
+.technique-picture{height:240px;display:grid;grid-template-rows:minmax(0,1fr) 34px;background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--tech-colour) 13%,#101820),#0b1219);border-bottom:1px solid color-mix(in srgb,var(--tech-colour) 28%,#263139)}
+.technique-picture:after{display:none}
+.technique-stage{min-height:0;min-width:0;display:flex;align-items:center;justify-content:center;padding:10px 12px}
+.technique-picture .technique-image{display:block;width:100%;height:100%;object-fit:contain;object-position:center;border-radius:5px;filter:drop-shadow(0 4px 10px #0007)}
+.technique-footer{display:flex;align-items:center;gap:8px;padding:0 12px;background:#0a1119c9;border-top:1px solid #ffffff0b;color:var(--tech-colour)}
+.technique-picture .technique-seal{position:static;flex:0 0 20px;width:20px;height:20px;border:0;background:transparent;font-size:16px}
+.technique-school{font-size:10px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9}
+.technique-picture .technique-number{position:static;margin-left:auto;font-variant-numeric:tabular-nums;font-size:10px;letter-spacing:.14em}
+.ability-tile .technique-picture{height:158px;grid-template-rows:minmax(0,1fr) 28px}
+.ability-tile .technique-stage{padding:6px}
+.ability-tile .technique-footer{padding:0 8px;gap:4px}
+.ability-tile .technique-school{font-size:8px;letter-spacing:.02em}
+.collection-card .form-art{height:270px!important;background:radial-gradient(ellipse at 50% 60%,color-mix(in srgb,var(--aura) 14%,#101820),#0b1219)}
+.collection-card .form-art img{padding:12px;object-fit:contain;object-position:center;filter:drop-shadow(0 4px 8px #0005)}
+.collection-card .form-art .form-aura{pointer-events:none;opacity:.06}
+.collection-card{transition:border-color .2s,box-shadow .2s}
+@media(hover:hover){.collection-card:hover{border-color:#6c8275;box-shadow:0 8px 26px #0003}}
+@media(max-width:700px){.technique-picture{height:230px}.collection-card .form-art{height:250px!important}.ability-tile .technique-picture{height:148px}}
+@media(prefers-reduced-motion:reduce){.collection-card{transition:none}}
+
+/* Every equipment unlock has its own complete illustration. */
+.equipment-picture{height:240px;display:flex;align-items:center;justify-content:center;background:#0a171c;border-bottom:1px solid #84c6c326;overflow:hidden}
+.equipment-picture .equipment-image{width:100%;height:100%;object-fit:contain;object-position:center;display:block}
+.gear-branch.gear-individual{display:block;padding:18px 0}
+.gear-individual>h3{margin:0 0 12px;font-size:14px}
+.gear-individual .gear-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gear-item{display:flex;flex-direction:column;text-align:left;min-width:0;overflow:hidden;padding:0;border:1px solid #3c5751;border-radius:10px;background:#12241d}
+.gear-item .equipment-picture{height:auto;width:100%;aspect-ratio:4/3}
+.gear-item>span{display:block;padding:10px;min-width:0}
+.gear-item strong{display:block;font-size:12px;overflow-wrap:anywhere}
+.gear-item small{display:block;margin-top:5px;font-size:11px;color:var(--teal)}
+.form-combat-summary{margin:10px 0;overflow-wrap:anywhere}
+.form-strain{color:#ffc186;font-size:12px;line-height:1.65}
+.form-combat-summary .fine-print{font-size:11px;line-height:1.6}
+.form-combat{margin-top:24px;padding-top:18px;border-top:1px solid #ffffff1a}
+.native-release{padding:12px 0}
+.awakening-tier{display:grid;grid-template-columns:40px minmax(0,1fr) minmax(220px,34%)}
+.tier-action{min-width:0;align-items:stretch;flex-direction:column;gap:10px}
+.tier-power{text-align:left;width:100%;font-size:12px}
+.tier-named-forms>.eyebrow{margin:0 0 8px;font-size:9px}
+.tier-form-power{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;margin:8px 0;align-items:start}
+.tier-form-power>span{overflow-wrap:anywhere;line-height:1.5}
+.tier-form-power>b{color:#e3efe4;white-space:nowrap}
+.tier-form-power>small{grid-column:1/-1;color:var(--muted);font-size:10px}
+.tier-route-potential{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #ffffff18;padding-top:10px;margin:10px 0;font-size:10px;color:var(--muted)}
+.tier-route-potential b{white-space:nowrap;color:var(--teal)}
+@media(max-width:700px){.equipment-picture{height:230px}.gear-individual .gear-items{gap:8px}}
+@media(max-width:700px){.awakening-tier{grid-template-columns:28px minmax(0,1fr)}.awakening-tier>.tier-action{grid-column:2;width:100%;margin-top:8px}.tier-action .tier-power{font-size:12px}.form-combat .r-detail-metrics{grid-template-columns:1fr;gap:8px}.form-combat .r-detail-metrics>section{display:flex;align-items:center;justify-content:space-between;gap:12px}.form-combat .r-detail-metrics strong{font-size:22px}}

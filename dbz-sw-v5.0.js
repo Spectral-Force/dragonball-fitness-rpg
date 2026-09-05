@@ -1,6 +1,2 @@
-'use strict';
-
-// Compatibility entry for existing v5 installations. Loading the v6 worker
-// under the old script URL lets previously installed GitHub Pages clients
-// activate the new cache before the v6 page registers its canonical worker.
-importScripts('./dbz-sw-v6.0.js');
+// Upgrade existing installed apps to the current v7 worker.
+importScripts('./dbz-sw-v7.js?build=7.0.0-9ed6f21fa3b6');

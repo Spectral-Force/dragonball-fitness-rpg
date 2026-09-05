@@ -1,15 +1,19 @@
 {
   "id": "./DragonBall_Fitness_RPG_v6.0.html",
-  "name": "Dragon Ball Fitness RPG v6",
-  "short_name": "DB Fitness v6",
-  "description": "A three-year, offline-first fitness RPG with race-specific power paths.",
-  "start_url": "./DragonBall_Fitness_RPG_v6.0.html",
+  "name": "Dragon Ball Fitness RPG v7",
+  "short_name": "DB Fitness",
+  "description": "A long training adventure through 38 sagas with eight race paths and legendary partners.",
+  "start_url": "./DragonBall_Fitness_RPG_v7.0.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#080b13",
-  "theme_color": "#ff8c2a",
-  "categories": ["fitness", "games", "lifestyle"],
+  "background_color": "#101b22",
+  "theme_color": "#101b22",
+  "categories": [
+    "fitness",
+    "games",
+    "lifestyle"
+  ],
   "icons": [
     {
       "src": "icons/icon-192.png",
@@ -27,15 +31,11 @@
   "shortcuts": [
     {
       "name": "Train now",
-      "short_name": "Train",
-      "url": "./DragonBall_Fitness_RPG_v6.0.html#training",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "url": "./DragonBall_Fitness_RPG_v7.0.html#train"
     },
     {
-      "name": "Today's plan",
-      "short_name": "Plan",
-      "url": "./DragonBall_Fitness_RPG_v6.0.html#fitness-plan",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "name": "Your adventure",
+      "url": "./DragonBall_Fitness_RPG_v7.0.html#adventure"
     }
   ]
 }
