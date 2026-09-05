@@ -4,6 +4,10 @@
 
 A long-form fitness RPG for desktop and mobile: record real workouts, develop seven individual stats, and progress through 38 sagas across eight race paths. Collect 89 training partners, 95 abilities, 52 transformations and 32 illustrated equipment upgrades.
 
+## Character management
+
+Tap your avatar or open **Settings & backup → Characters**. Delete an individual character, create another race, or choose **Start fresh** to reset all character progress. Fresh start can keep your workout templates and the current character’s four-week plan. Both destructive actions require typed confirmation and a verified recovery snapshot; a storage failure leaves the current characters in place. Recovery snapshots are also accessible from the new-character screen.
+
 ## Existing mobile installations
 
 Open your existing app while online. Its old v6 launch address now opens v7 on the same site, so no reinstall is required. If it initially shows v6, allow the update to download, then close and reopen it. Future releases are checked on launch, return online and return to the app. Updates wait while an editor or dialog is open and save the current workout draft before refreshing.

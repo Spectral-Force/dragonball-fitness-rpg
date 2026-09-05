@@ -14,6 +14,7 @@ import { createRestoredUI } from '../v7/restored-ui.js';
 import { createLegacyCorrection, getEffectivePhysicalRecord } from '../v7/history-corrections.js';
 import { createDraftRecovery } from '../v7/draft-recovery.js';
 import { renderFormCombat, renderTierPower } from '../v7/form-ui.js';
+import { deleteCharacter, startFresh } from '../v7/characters.js';
 
 const uiSource = fs.readFileSync(new URL('../v7/app.js', import.meta.url), 'utf8').replace(/^import .*;\s*$/gm, '').replace(/\bboot\(\);\s*$/, '');
 const copy = value => JSON.parse(JSON.stringify(value));
@@ -44,14 +45,14 @@ function harness(storage, initial, draftSession = memory()) {
     // vm is a separate JavaScript realm; normalize objects at its boundary to model the browser's single realm.
     const S = { ...storage, saveGame: (state, options) => storage.saveGame(copy(state), options), exportGame: state => storage.exportGame(copy(state)) };
     const context = vm.createContext({ E, S, CATALOG, STATS, structuredClone, Date, Promise, initial,
-        startUpdateChecks:()=>({check:async()=>{},applyReady:async()=>false}), cacheArtwork, renderDashboard, renderStatSheet, renderGrowthPlot, abilityPicture, equipmentPicture, picture,
+        deleteCharacter, startFresh, startUpdateChecks:()=>({check:async()=>{},applyReady:async()=>false}), cacheArtwork, renderDashboard, renderStatSheet, renderGrowthPlot, abilityPicture, equipmentPicture, picture,
         FORM_ART, partnerImage, formImage, imagePath, auraColour, createPlannerUI, templateLibrary, normalizeTemplate, workoutFromDay,
         createLegacyCorrection, getEffectivePhysicalRecord, createDraftRecovery, renderFormCombat, renderTierPower, sessionStorage:draftSession,
         createRestoredUI: host => ({ ...createRestoredUI(host), showReceipt: id => rewards.push({ id, receipt: copy(host.getCharacter().workouts.find(w => w.id === id)?.receipt) }) }),
         CustomEvent: class {}, HTMLImageElement: class {}, crypto: globalThis.crypto,
         FormData: class { constructor(form) { this.values = form.values || {}; } get(key) { return this.values[key] ?? null; } },
         setTimeout(fn) { timers.set(++timerId, fn); return timerId; }, clearTimeout(id) { timers.delete(id); }, setInterval() {}, clearInterval() {},
-        document, window: { addEventListener() {}, scrollTo() {}, scrollY: 0, location, history }, console,
+        document, window: { addEventListener:(name,fn)=>events.set('window:'+name,fn), scrollTo() {}, scrollY: 0, location, history }, console,
         collectNotification: value => notifications.push(value), collectReward: (...args) => rewards.push(args)
     });
     vm.runInContext(`${uiSource}\n
@@ -60,7 +61,7 @@ function harness(storage, initial, draftSession = memory()) {
       notify=collectNotification;
       showReward=collectReward;
       closeDialog=()=>{};
-      globalThis.probe={persist,touchDraft,commit,boot,prepareUpdateReload,handleAction,syncPageURL,renderDevelop,renderAdventure,renderRecords,renderTrain,exerciseResults,get:()=>({state,ui}),flush:()=>saveChain,
+      globalThis.probe={replaceCharacters,persist,touchDraft,commit,boot,prepareUpdateReload,handleAction,syncPageURL,renderDevelop,renderAdventure,renderRecords,renderTrain,exerciseResults,get:()=>({state,ui}),flush:()=>saveChain,
         setState:value=>state=value};
     `, context);
     return { ...context.probe, node, events, timers, notifications, rewards, location, document,
@@ -279,4 +280,35 @@ test('update reload refuses storage failure and edits made while its save is pen
     app.get().state.characters.a.draft.notes='Typed during save';app.touchDraft();release();
     assert.equal(await update,false);assert.equal(app.get().state.characters.a.draft.notes,'Typed during save');
     assert.equal(await app.prepareUpdateReload(),true);
+});
+
+test('character changes flush drafts, save a detached candidate, and retain other characters',async()=>{
+    const localStorage=memory(),storage=createStorage({localStorage});const saved=(await storage.saveGame(fixture())).state;
+    const app=harness(storage,saved);app.get().state.characters.a.draft.notes='Final keystrokes before deletion';app.touchDraft();
+    await app.replaceCharacters(current=>deleteCharacter(current,'a'),'Deleted');
+    assert.equal(app.get().ui.replacing,false);assert.equal(app.get().state.activeCharacterId,'b');assert.equal(app.get().state.characters.a,undefined);
+    const snapshot=(await storage.listSnapshots()).find(s=>s.id.includes(':manual:'));
+    const restored=await storage.restoreSnapshot(snapshot.id);assert.equal(restored.characters.a.draft.notes,'Final keystrokes before deletion');
+});
+
+test('failed character replacement leaves the working character intact and blocks background saves during replacement',async()=>{
+    const localStorage=memory(),storage=createStorage({localStorage});const saved=(await storage.saveGame(fixture())).state;
+    let protectedCalls=0;
+    const fail={...storage,saveGame:async(state,options)=>{if(options?.requireCheckpoint){protectedCalls++;throw Error('Recovery snapshot is full');}return storage.saveGame(state,options);}};
+    const app=harness(fail,saved);
+    await assert.rejects(app.replaceCharacters(current=>deleteCharacter(current,'a'),'Deleted'),/Recovery snapshot/);
+    assert.equal(protectedCalls,1);assert.equal(app.get().ui.replacing,false);assert.equal(app.get().state.activeCharacterId,'a');assert.equal(app.get().state.characters.a.name,'Character A');
+    app.get().ui.replacing=true;const before=app.get().state.revision;
+    app.events.get('window:pagehide')();app.document.visibilityState='hidden';app.events.get('visibilitychange')();await app.flush();
+    assert.equal(app.get().state.revision,before);
+});
+
+test('character management requires the exact typed confirmation and reset saves an empty v7 state',async()=>{
+    const localStorage=memory(),storage=createStorage({localStorage});const saved=(await storage.saveGame(fixture())).state;const app=harness(storage,saved);
+    const error=app.node('#character-error'),submit=app.node('#character-submit');
+    const form={id:'delete-character-form',dataset:{id:'a'},values:{confirmation:'wrong'},querySelector:s=>s.includes('submit')?submit:error};
+    await app.events.get('submit')({target:form,preventDefault(){}});assert.match(error.textContent,/exactly/);assert.ok(app.get().state.characters.a);
+    form.values.confirmation='Character A';await app.events.get('submit')({target:form,preventDefault(){}});assert.equal(app.get().state.characters.a,undefined);assert.equal(submit.disabled,false);
+    form.id='start-fresh-form';form.values={confirmation:'START FRESH'};await app.events.get('submit')({target:form,preventDefault(){}});
+    assert.deepEqual(Object.keys(app.get().state.characters),[]);assert.deepEqual((await storage.loadGame()).state.characters,{});
 });

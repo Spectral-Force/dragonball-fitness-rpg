@@ -1,6 +1,6 @@
 {
   "version": "7.0.0",
-  "build": "7.0.0-9ed6f21fa3b6",
+  "build": "7.0.0-7a9ad60094f1",
   "entry": "DragonBall_Fitness_RPG_v7.0.html",
   "schemaVersion": 70,
   "precache": [
@@ -15,6 +15,7 @@
     "v7/art.js",
     "v7/artwork.css",
     "v7/catalog.js",
+    "v7/characters.js",
     "v7/chronicle.js",
     "v7/dashboard.js",
     "v7/draft-recovery.js",
@@ -24,6 +25,7 @@
     "v7/form-ui.js",
     "v7/history-corrections.js",
     "v7/migration.js",
+    "v7/mobile.css",
     "v7/offline.js",
     "v7/planner-ui.js",
     "v7/planner.css",
@@ -77,13 +79,14 @@
     "images/partners/kid_goku.webp",
     "images/partners/master_roshi.webp"
   ],
-  "precacheBytes": 5238694,
+  "precacheBytes": 5249158,
   "shellBudgetBytes": 6000000,
   "runtimeModules": [
     "v7/app.js",
     "v7/art.js",
     "v7/artwork.css",
     "v7/catalog.js",
+    "v7/characters.js",
     "v7/chronicle.js",
     "v7/dashboard.js",
     "v7/draft-recovery.js",
@@ -93,6 +96,7 @@
     "v7/form-ui.js",
     "v7/history-corrections.js",
     "v7/migration.js",
+    "v7/mobile.css",
     "v7/offline.js",
     "v7/planner-ui.js",
     "v7/planner.css",

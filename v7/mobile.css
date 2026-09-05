@@ -1,0 +1,47 @@
+/* Device-provided insets work in Safari, installed PWAs and both orientations. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  scroll-padding-top: calc(var(--safe-top) + 16px);
+  scroll-padding-bottom: calc(var(--safe-bottom) + 88px);
+}
+body { padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); }
+.sidebar { top: var(--safe-top); height: calc(100dvh - var(--safe-top) - var(--safe-bottom)); }
+.welcome, .welcome-art { min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom)); }
+.character-switch { min-height: 48px; min-width: 48px; }
+.character-switch .avatar { flex-shrink: 0; }
+.skip-link:focus { top: calc(var(--safe-top) + 12px); left: calc(var(--safe-left) + 12px); }
+.app-dialog {
+  inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  margin: auto;
+  max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 28px);
+  max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 28px);
+}
+.bottom-nav {
+  padding-left: calc(8px + var(--safe-left));
+  padding-right: calc(8px + var(--safe-right));
+  padding-bottom: max(8px, var(--safe-bottom));
+}
+#toast { left: calc(50% + (var(--safe-left) - var(--safe-right)) / 2); max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 32px); bottom: calc(25px + var(--safe-bottom)); }
+.character-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.character-row .character-choice { width: 100%; min-width: 0; }
+.character-row .character-delete { padding-inline: 12px; min-height: 48px; }
+.character-reset { border-top: 1px solid var(--border); margin-top: 24px; padding-top: 20px; }
+.character-reset p, .character-scope { font-size: 13px; color: var(--muted); }
+.character-confirm-name { color: var(--ink); overflow-wrap: anywhere; }
+.character-change-error { margin: 12px 0; }
+.character-setup-choice { display: flex; align-items: flex-start; gap: 12px; }
+.character-setup-choice input { width: 20px; height: 20px; flex-shrink: 0; margin-top: 3px; }
+@media (max-width: 700px) {
+  .welcome-art { min-height: 425px; }
+  #toast { bottom: calc(86px + var(--safe-bottom)); }
+  .character-row { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .character-row .character-delete { justify-self: end; }
+
+}
+
+@media (max-width: 950px) {
+  .app-dialog input, .app-dialog select, .app-dialog textarea { font-size: 16px; }
+}

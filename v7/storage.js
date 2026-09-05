@@ -128,10 +128,10 @@ export function createStorage(environment = globalThis) {
         const snapshotId = manual ? `snapshot:manual:${Date.now()}:${token()}` : `snapshot:daily:${day}`;
         return makeEnvelope(clone(previous), { snapshotId, kind: manual ? 'manual' : 'daily' });
     }
-    function trimSnapshotValues(values) {
+    function trimSnapshotValues(values, keepId) {
         const valid = values.filter(item => item?.snapshotId && parseCandidate(item, 'snapshot'));
         const byId = new Map(valid.map(item => [item.snapshotId, item]));
-        const sorted = [...byId.values()].sort((a, b) => timestamp(b.state) - timestamp(a.state));
+        const sorted = [...byId.values()].sort((a, b) => Number(b.snapshotId === keepId) - Number(a.snapshotId === keepId) || timestamp(b.state) - timestamp(a.state));
         return [...sorted.filter(item => item.kind === 'manual').slice(0, 4), ...sorted.filter(item => item.kind !== 'manual').slice(0, 10)];
     }
 
@@ -155,7 +155,7 @@ export function createStorage(environment = globalThis) {
                     const all = store.getAll();
                     all.onsuccess = () => {
                         const snapshots = all.result.filter(item => item?.snapshotId);
-                        const retained = new Set(trimSnapshotValues(snapshots).map(item => item.snapshotId));
+                        const retained = new Set(trimSnapshotValues(snapshots, checkpoint?.snapshotId).map(item => item.snapshotId));
                         snapshots.filter(item => !retained.has(item.snapshotId)).forEach(item => store.delete(item.snapshotId));
                     };
                 };
@@ -197,6 +197,7 @@ export function createStorage(environment = globalThis) {
             candidate.savedAt = new Date().toISOString();
             const envelope = makeEnvelope(candidate);
             const checkpoint = meaningfulSnapshot(current?.state || lastLoaded, options.force || options.checkpoint);
+            if (options.requireCheckpoint && !checkpoint) throw new Error('Save your current adventure before deleting characters or starting fresh.');
             let backend = 'indexedDB';
             let warning;
             try {
@@ -207,6 +208,21 @@ export function createStorage(environment = globalThis) {
                 // Recheck fallback before replacing it, including database failures mid-save.
                 const fallback = parseCandidate(getLocal(STORAGE_KEYS.fallback), 'localStorage-fallback');
                 if (!options.force && fallback?.state.revision > expectedRevision) throw conflict();
+                // Destructive character changes must retain recovery before the
+                // fallback primary is replaced. Ordinary saves remain available
+                // even when optional snapshot storage is full.
+                if (options.requireCheckpoint) {
+                    try {
+                        const raw = JSON.parse(getLocal(STORAGE_KEYS.snapshots) || '[]');
+                        const previous = Array.isArray(raw) ? raw : [];
+                        const snapshots = trimSnapshotValues([checkpoint, ...previous.filter(item => item.snapshotId !== checkpoint.snapshotId)], checkpoint.snapshotId);
+                        setLocal(STORAGE_KEYS.snapshots, JSON.stringify(snapshots));
+                        const verified = JSON.parse(getLocal(STORAGE_KEYS.snapshots) || '[]');
+                        if (!verified.some(item => item.snapshotId === checkpoint.snapshotId && item.commitId === checkpoint.commitId && JSON.stringify(item.state) === JSON.stringify(checkpoint.state))) throw new Error('Snapshot verification failed.');
+                    } catch {
+                        throw new Error('A recovery snapshot could not be saved, so your characters have not been removed. Free some device storage and try again.');
+                    }
+                }
                 try {
                     setLocal(STORAGE_KEYS.fallback, JSON.stringify(envelope));
                     const verified = JSON.parse(getLocal(STORAGE_KEYS.fallback) || 'null');
@@ -215,10 +231,10 @@ export function createStorage(environment = globalThis) {
                     throw new Error(`The game could not be saved. Keep this tab open and export a backup. ${fallbackError.message}`);
                 }
                 warning = 'Saved to local fallback because the browser database is unavailable.';
-                if (checkpoint) {
+                if (checkpoint && !options.requireCheckpoint) {
                     try {
                         const previous = JSON.parse(getLocal(STORAGE_KEYS.snapshots) || '[]');
-                        setLocal(STORAGE_KEYS.snapshots, JSON.stringify(trimSnapshotValues([...previous.filter(item => item.snapshotId !== checkpoint.snapshotId), checkpoint])));
+                        setLocal(STORAGE_KEYS.snapshots, JSON.stringify(trimSnapshotValues([...previous.filter(item => item.snapshotId !== checkpoint.snapshotId), checkpoint], checkpoint.snapshotId)));
                     } catch { warning += ' Recovery history is full; export a backup.'; }
                 }
             }

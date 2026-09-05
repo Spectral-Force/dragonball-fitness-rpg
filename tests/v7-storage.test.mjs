@@ -247,3 +247,36 @@ test('daily recovery history rotates without truncating the primary game', async
     assert.equal((await store.loadGame()).state.revision, 15);
     assert.deepEqual((await store.loadGame()).state.characters.hero.stats, current.characters.hero.stats);
 });
+
+test('required fallback recovery snapshot is verified before destructive replacement',async()=>{
+    const localStorage=localMemory(),storage=createStorage({localStorage});const old=(await storage.saveGame(fixture())).state;
+    const raw=localStorage.getItem(STORAGE_KEYS.fallback),set=localStorage.setItem.bind(localStorage);
+    localStorage.setItem=(key,value)=>{if(key===STORAGE_KEYS.snapshots)throw Error('Snapshots full');set(key,value);};
+    const empty={...old,characters:{},activeCharacterId:null};
+    await assert.rejects(storage.saveGame(empty,{checkpoint:true,requireCheckpoint:true}),/snapshot could not be saved/);
+    assert.equal(localStorage.getItem(STORAGE_KEYS.fallback),raw);assert.equal((await storage.loadGame()).state.characters.hero.name,'Hero');
+    localStorage.setItem=set;
+    await storage.saveGame(empty,{checkpoint:true,requireCheckpoint:true});assert.deepEqual((await storage.loadGame()).state.characters,{});
+    assert.ok((await storage.listSnapshots()).some(s=>s.characters.some(c=>c.name==='Hero')));
+});
+
+test('required checkpoint rejects unverified writes and missing prior saves',async()=>{
+    const localStorage=localMemory(),storage=createStorage({localStorage});
+    await assert.rejects(storage.saveGame(fixture(),{checkpoint:true,requireCheckpoint:true}),/Save your current adventure/);
+    const old=(await storage.saveGame(fixture())).state,raw=localStorage.getItem(STORAGE_KEYS.fallback),set=localStorage.setItem.bind(localStorage);
+    localStorage.setItem=(key,value)=>{if(key!==STORAGE_KEYS.snapshots)set(key,value);};
+    await assert.rejects(storage.saveGame({...old,characters:{},activeCharacterId:null},{checkpoint:true,requireCheckpoint:true}),/snapshot could not be saved/);
+    assert.equal(localStorage.getItem(STORAGE_KEYS.fallback),raw);
+});
+
+test('new manual recovery points remain available during rapid snapshot rotation',async()=>{
+    for(const useDatabase of [true,false]){
+        const env=environment();if(!useDatabase)env.indexedDB.unavailable=true;
+        const storage=createStorage(env);let current=(await storage.saveGame(fixture())).state;
+        for(let i=0;i<6;i++){
+            const next=structuredClone(current);next.characters.hero.name='Stage '+i;
+            const before=current.characters.hero.name;current=(await storage.saveGame(next,{checkpoint:true,requireCheckpoint:true})).state;
+            const snapshots=await storage.listSnapshots();assert.ok(snapshots.some(s=>s.characters.some(c=>c.name===before)),before);assert.ok(snapshots.filter(s=>s.id.includes(':manual:')).length<=4);
+        }
+    }
+});
